@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nitrix — Szybka przeglądarka</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050507;
+    --surface: #0c0c10;
+    --nitro: #00f5a0;
+    --fire: #ff4d00;
+    --white: #f0f0f2;
+    --muted: #5a5a6a;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CURSOR */
+  .cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--nitro);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s;
+    box-shadow: 0 0 12px var(--nitro);
+  }
+  .cursor-ring {
+    position: fixed;
+    width: 32px; height: 32px;
+    border: 1px solid rgba(0,245,160,0.35);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+  }
+
+  /* INTRO */
+  #intro {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    animation: introFade 0.8s ease 3.6s forwards;
+  }
+  @keyframes introFade { to { opacity: 0; pointer-events: none; } }
+
+  .rocket-wrap {
+    position: relative; width: 80px; height: 160px;
+    animation: rocketLaunch 1.2s cubic-bezier(0.4,0,0.2,1) 2.2s forwards;
+  }
+  @keyframes rocketLaunch {
+    0%   { transform: translateY(0); opacity: 1; }
+    25%  { transform: translateY(12px); opacity: 1; }
+    100% { transform: translateY(-130vh); opacity: 0; }
+  }
+
+  .rocket {
+    font-size: 64px; text-align: center; display: block;
+    animation: rocketIdle 0.6s ease-in-out infinite alternate;
+    filter: drop-shadow(0 0 20px var(--nitro));
+  }
+  @keyframes rocketIdle {
+    from { transform: translateY(0) rotate(-2deg); }
+    to   { transform: translateY(-5px) rotate(2deg); }
+  }
+
+  .exhaust {
+    position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .exhaust-flame { width: 6px; border-radius: 50%; animation: flicker 0.12s ease-in-out infinite alternate; }
+  .f1 { height: 28px; background: linear-gradient(to bottom, #fff, var(--nitro)); }
+  .f2 { height: 18px; width: 4px; background: linear-gradient(to bottom, var(--nitro), var(--fire)); opacity: 0.8; animation-delay: 0.04s; }
+  .f3 { height: 12px; width: 3px; background: linear-gradient(to bottom, var(--fire), transparent); opacity: 0.5; animation-delay: 0.08s; }
+  @keyframes flicker {
+    from { transform: scaleX(1) scaleY(1); }
+    to   { transform: scaleX(1.5) scaleY(0.8); opacity: 0.6; }
+  }
+
+  .intro-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(56px, 12vw, 90px); letter-spacing: 0.14em;
+    color: var(--nitro); text-shadow: 0 0 40px rgba(0,245,160,0.5);
+    opacity: 0; animation: introTextIn 0.6s ease 0.9s forwards;
+    margin-top: 14px;
+  }
+  @keyframes introTextIn {
+    from { opacity: 0; letter-spacing: 0.5em; }
+    to   { opacity: 1; letter-spacing: 0.14em; }
+  }
+
+  /* STARS */
+  #stars { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .star {
+    position: absolute; background: white; border-radius: 50%;
+    animation: twinkle var(--d) ease-in-out infinite alternate;
+    animation-delay: var(--dl);
+  }
+  @keyframes twinkle {
+    from { opacity: var(--o1); } to { opacity: var(--o2); }
+  }
+
+  /* SPEED LINES */
+  #speed-lines {
+    position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden;
+    opacity: 0; animation: fadeIn 0.6s ease 3.9s forwards;
+  }
+  .speed-line {
+    position: absolute; height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0,245,160,0.1), transparent);
+    animation: speedMove var(--sd) linear infinite;
+    animation-delay: var(--sdl);
+    top: var(--st); width: var(--sw); left: -100%;
+  }
+  @keyframes speedMove { to { transform: translateX(300vw); } }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 48px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    background: rgba(5,5,7,0.75);
+    opacity: 0; transform: translateY(-16px);
+    animation: navIn 0.5s ease 4.1s forwards;
+  }
+  @keyframes navIn { to { opacity: 1; transform: none; } }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px; letter-spacing: 0.15em;
+    color: var(--nitro); text-shadow: 0 0 16px rgba(0,245,160,0.4);
+    text-decoration: none;
+  }
+  .logo span { color: var(--white); }
+
+  .alpha-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em;
+    background: rgba(255,77,0,0.12);
+    border: 1px solid rgba(255,77,0,0.35);
+    color: #ff6b2b; padding: 5px 13px; border-radius: 2px;
+  }
+
+  /* HERO */
+  main { position: relative; z-index: 2; }
+
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 120px 24px 80px; position: relative;
+  }
+
+  .hero-glow {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -60%);
+    width: 500px; height: 500px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,245,160,0.055) 0%, transparent 70%);
+    pointer-events: none; animation: pulseGlow 4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow {
+    0%, 100% { transform: translate(-50%,-60%) scale(1); opacity: 1; }
+    50%       { transform: translate(-50%,-60%) scale(1.2); opacity: 0.5; }
+  }
+
+  .hero-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--nitro);
+    margin-bottom: 20px; opacity: 0; animation: fadeUp 0.6s ease 4.3s forwards;
+  }
+  .hero-tag::before, .hero-tag::after { content: '—'; margin: 0 10px; color: var(--muted); }
+
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(90px, 20vw, 210px); line-height: 0.88; letter-spacing: 0.04em;
+    background: linear-gradient(140deg, #ffffff 0%, #b0ffe4 45%, #00f5a0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 50px rgba(0,245,160,0.25));
+    opacity: 0; animation: fadeUp 0.7s ease 4.5s forwards;
+  }
+
+  .hero-slogan {
+    font-size: clamp(17px, 2.5vw, 22px); font-weight: 600; color: var(--muted);
+    margin-top: 28px; line-height: 1.6;
+    opacity: 0; animation: fadeUp 0.7s ease 4.7s forwards;
+  }
+  .hero-slogan em { font-style: normal; color: var(--white); font-weight: 700; }
+
+  .hero-actions {
+    display: flex; gap: 14px; margin-top: 44px;
+    flex-wrap: wrap; justify-content: center;
+    opacity: 0; animation: fadeUp 0.7s ease 4.9s forwards;
+  }
+
+  .btn-primary {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--bg); background: var(--nitro); border: none;
+    padding: 15px 38px; border-radius: 3px; cursor: none; text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
+  }
+  .btn-primary::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.25) 55%, transparent 65%);
+    transform: translateX(-100%); transition: transform 0.5s;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 28px rgba(0,245,160,0.45); }
+  .btn-primary:hover::after { transform: translateX(100%); }
+
+  .btn-ghost {
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--white); background: transparent;
+    border: 1px solid rgba(255,255,255,0.13);
+    padding: 15px 38px; border-radius: 3px; cursor: none; text-decoration: none;
+    transition: border-color 0.2s, color 0.2s;
+    appearance: none; -webkit-appearance: none;
+    display: inline-block; line-height: normal;
+  }
+  .btn-ghost:hover { border-color: var(--nitro); color: var(--nitro); }
+
+  .alpha-warning {
+    margin-top: 44px;
+    background: rgba(255,77,0,0.06); border: 1px solid rgba(255,77,0,0.18);
+    border-radius: 4px; padding: 13px 26px;
+    display: inline-flex; align-items: center; gap: 12px;
+    font-family: 'DM Mono', monospace; font-size: 12px; color: #ff7a45; letter-spacing: 0.05em;
+    opacity: 0; animation: fadeUp 0.7s ease 5.1s forwards;
+  }
+  .alpha-dot {
+    width: 8px; height: 8px; background: #ff4d00; border-radius: 50%; flex-shrink: 0;
+    box-shadow: 0 0 10px #ff4d00; animation: dotPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes dotPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50%       { transform: scale(1.6); opacity: 0.4; }
+  }
+
+  .scroll-hint {
+    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    opacity: 0; animation: fadeIn 0.6s ease 5.5s forwards;
+  }
+  .scroll-hint span { font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  .scroll-bar {
+    width: 1px; height: 44px;
+    background: linear-gradient(to bottom, var(--nitro), transparent);
+    animation: scrollBar 1.6s ease-in-out infinite;
+  }
+  @keyframes scrollBar {
+    0%, 100% { opacity: 0.2; transform: scaleY(0.4); transform-origin: top; }
+    50%       { opacity: 1; transform: scaleY(1); }
+  }
+
+  /* ABOUT */
+  .about {
+    padding: 100px 48px 80px;
+    max-width: 800px; margin: 0 auto; text-align: center;
+  }
+  .section-label {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--nitro); margin-bottom: 20px;
+  }
+  .about-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(38px, 7vw, 72px); letter-spacing: 0.06em; line-height: 1;
+    color: var(--white); margin-bottom: 32px;
+  }
+  .about-text {
+    font-size: 16px; color: var(--muted); line-height: 1.85; max-width: 580px; margin: 0 auto;
+  }
+  .about-text em { font-style: normal; color: var(--white); font-weight: 600; }
+
+  /* ALPHA SECTION */
+  .alpha-section { padding: 0 48px 120px; max-width: 800px; margin: 0 auto; }
+  .alpha-box {
+    border: 1px solid rgba(255,77,0,0.2); border-radius: 6px;
+    background: rgba(255,77,0,0.04); padding: 52px; text-align: center;
+  }
+  .alpha-box .big-badge {
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    letter-spacing: 0.25em; color: #ff6b2b; margin-bottom: 18px; display: block;
+  }
+  .alpha-box h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(32px, 5vw, 54px); letter-spacing: 0.06em;
+    color: var(--white); margin-bottom: 20px;
+  }
+  .alpha-box p { font-size: 15px; color: var(--muted); line-height: 1.8; max-width: 480px; margin: 0 auto; }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding: 44px 48px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 20px;
+  }
+  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.15em; color: var(--nitro); }
+  .footer-copy { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+  .footer-alpha {
+    font-family: 'DM Mono', monospace; font-size: 11px; color: #ff6b2b;
+    background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.22);
+    padding: 5px 13px; border-radius: 2px; letter-spacing: 0.08em;
+  }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+
+  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+  .reveal.visible { opacity: 1; transform: none; }
+
+  @media (max-width: 640px) {
+    nav { padding: 18px 22px; }
+    .about, .alpha-section { padding-left: 22px; padding-right: 22px; }
+    .alpha-box { padding: 32px 20px; }
+    footer { padding: 32px 22px; flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- INTRO -->
+<div id="intro">
+  <div class="rocket-wrap">
+    <span class="rocket">🚀</span>
+    <div class="exhaust">
+      <div class="exhaust-flame f1"></div>
+      <div class="exhaust-flame f2"></div>
+      <div class="exhaust-flame f3"></div>
+    </div>
+  </div>
+  <div class="intro-title">NITRIX</div>
+</div>
+
+<div id="stars"></div>
+<div id="speed-lines"></div>
+
+<nav>
+  <span class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:none;">
+    <img src="https://files.catbox.moe/81r9mt.png" alt="Nitrix Logo" style="height:32px;width:32px;object-fit:contain;vertical-align:middle;margin-right:10px;">NIT<span>RIX</span>
+  </span>
+  <span class="alpha-badge">ALPHA v1.1.0</span>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-tag">Nitro Browser</div>
+    <img src="https://files.catbox.moe/81r9mt.png" alt="Nitrix Logo" style="height:clamp(70px,12vw,120px);width:clamp(70px,12vw,120px);object-fit:contain;filter:drop-shadow(0 0 30px rgba(0,245,160,0.4));opacity:0;animation:fadeUp 0.7s ease 4.4s forwards;margin-bottom:8px;">
+    <h1 class="hero-title">NITRIX</h1>
+    <p class="hero-slogan">Przeglądarka, która <em>leci</em>.</p>
+    <div class="hero-actions">
+      <a href="https://drive.google.com/uc?export=download&id=1oC0ku-5Qn8KNBXt804v5AFfjgKCypiaV" class="btn-primary">Pobierz teraz</a>
+      <button class="btn-ghost" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Czym jest Nitrix?</button>
+    </div>
+    <div class="alpha-warning">
+      <div class="alpha-dot"></div>
+      Wersja Alpha — to wczesny etap, mogą występować błędy.
+    </div>
+    <div class="scroll-hint">
+      <span>Scroll</span>
+      <div class="scroll-bar"></div>
+    </div>
+  </section>
+
+  <section class="about" id="about">
+    <div class="section-label reveal">// O projekcie</div>
+    <h2 class="about-title reveal">Co to jest<br>Nitrix?</h2>
+    <p class="about-text reveal">
+      Nitrix to <em>nowy projekt przeglądarki</em> — wciąż we wczesnej fazie rozwoju.
+      Chcemy stworzyć szybkie, lekkie i przyjemne narzędzie do codziennego przeglądania internetu.
+      Jesteśmy dopiero na początku drogi, ale już teraz możesz sprawdzić co mamy.
+    </p>
+  </section>
+
+  <section class="alpha-section">
+    <div class="alpha-box reveal">
+      <span class="big-badge">⚠ WERSJA ALPHA</span>
+      <h3>W trakcie budowania</h3>
+      <p>
+        Nitrix jest aktywnie rozwijany. W tej wersji mogą pojawiać się błędy i brakujące funkcje.
+        Cenimy każdy feedback — razem tworzymy coś fajnego.
+      </p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="footer-logo">NITRIX</div>
+  <div class="footer-copy">© 2026 Nitrix. Projekt w trakcie rozwoju.</div>
+  <div class="footer-alpha">ALPHA — wczesny dostęp</div>
+</footer>
+
+<script>
+  // CURSOR
+  const cursor = document.getElementById('cursor');
+  const ring   = document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
+  (function animRing(){ rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); })();
+  document.querySelectorAll('a,button').forEach(el=>{
+    el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2.5)'; ring.style.width='50px'; ring.style.height='50px'; });
+    el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; ring.style.width='32px'; ring.style.height='32px'; });
+  });
+
+  // STARS
+  const starsEl = document.getElementById('stars');
+  for(let i=0;i<100;i++){
+    const s=document.createElement('div'); s.className='star';
+    const size=Math.random()*2+0.4;
+    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--o1:${(Math.random()*0.25+0.04).toFixed(2)};--o2:${(Math.random()*0.5+0.1).toFixed(2)};--d:${(Math.random()*3+1.5).toFixed(1)}s;--dl:${(Math.random()*4).toFixed(1)}s;`;
+    starsEl.appendChild(s);
+  }
+
+  // SPEED LINES
+  const linesEl = document.getElementById('speed-lines');
+  for(let i=0;i<16;i++){
+    const l=document.createElement('div'); l.className='speed-line';
+    l.style.cssText=`--sd:${(Math.random()*5+3).toFixed(1)}s;--sdl:-${(Math.random()*7).toFixed(1)}s;--st:${Math.random()*100}%;--sw:${(Math.random()*180+60)}px;`;
+    linesEl.appendChild(l);
+  }
+
+  // SCROLL REVEAL
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'),i*100); obs.unobserve(e.target); } });
+  },{threshold:0.15});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
