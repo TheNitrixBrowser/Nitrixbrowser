@@ -1,537 +1,3671 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Nitrix — Przeglądarka, która leci.</title>
-<link rel="icon" type="image/png" href="https://files.catbox.moe/81r9mt.png">
-<link rel="apple-touch-icon" href="https://files.catbox.moe/81r9mt.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #050507;
-    --surface: #0c0c10;
-    --nitro: #00f5a0;
-    --fire: #ff4d00;
-    --white: #f0f0f2;
-    --muted: #5a5a6a;
-  }
+  <meta charset="UTF-8"/>
+  <title>Nitrix</title>
+  <link rel="dns-prefetch" href="//google.pl">
+  <link rel="dns-prefetch" href="//google.com">
+  <link rel="dns-prefetch" href="//googleapis.com">
+  <link rel="dns-prefetch" href="//gstatic.com">
+  <link rel="dns-prefetch" href="//youtube.com">
+  <link rel="dns-prefetch" href="//facebook.com">
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="//cloudflare.com">
+  <link rel="preconnect" href="https://www.google.pl" crossorigin>
+  <link rel="preconnect" href="https://www.google.com" crossorigin>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
+    html {
+      --bg:                  #202124;
+      --navbar-bg:           #202124;
+      --input-bg:            #303134;
+      --border:              #5f6368;
+      --text:                #e8eaed;
+      --text-dim:            #9aa0a6;
+      --accent:              #8ab4f8;
+      --hover:               #3c4043;
+      --icon:                #bdc1c6;
+      --settings-bg:         #292a2d;
+      --settings-sidebar:    #1a1b1e;
+      --settings-item-hover: #35363a;
+      --settings-active:     #3c4043;
+      --dd-bg:               #303134;
+      --win-text:            #9aa0a6;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--white);
-    font-family: 'Syne', sans-serif;
-    overflow-x: hidden;
-    cursor: none;
-  }
+    html.light {
+      --bg:                  #f1f3f4;
+      --navbar-bg:           #f1f3f4;
+      --input-bg:            #ffffff;
+      --border:              #dadce0;
+      --text:                #202124;
+      --text-dim:            #5f6368;
+      --accent:              #1a73e8;
+      --hover:               #e8eaed;
+      --icon:                #444746;
+      --settings-bg:         #ffffff;
+      --settings-sidebar:    #f1f3f4;
+      --settings-item-hover: #e8eaed;
+      --settings-active:     #d3e3fd;
+      --dd-bg:               #ffffff;
+      --win-text:            #5f6368;
+    }
 
-  /* CURSOR */
-  .cursor {
-    position: fixed;
-    width: 8px; height: 8px;
-    background: var(--nitro);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9999;
-    transform: translate(-50%, -50%);
-    transition: transform 0.1s, width 0.2s, height 0.2s;
-    box-shadow: 0 0 12px var(--nitro);
-  }
-  .cursor-ring {
-    position: fixed;
-    width: 32px; height: 32px;
-    border: 1px solid rgba(0,245,160,0.35);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%);
-    transition: width 0.3s, height 0.3s;
-  }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      overflow: hidden;
+      user-select: none;
+      transition: background .12s, color .12s;
+    }
 
-  /* INTRO */
-  #intro {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    z-index: 1000;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    animation: introFade 0.8s ease 3.6s forwards;
-  }
-  @keyframes introFade { to { opacity: 0; pointer-events: none; } }
+    input, textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
 
-  .rocket-wrap {
-    position: relative; width: 80px; height: 160px;
-    animation: rocketLaunch 1.2s cubic-bezier(0.4,0,0.2,1) 2.2s forwards;
-  }
-  @keyframes rocketLaunch {
-    0%   { transform: translateY(0); opacity: 1; }
-    25%  { transform: translateY(12px); opacity: 1; }
-    100% { transform: translateY(-130vh); opacity: 0; }
-  }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
 
-  .rocket {
-    font-size: 64px; text-align: center; display: block;
-    animation: rocketIdle 0.6s ease-in-out infinite alternate;
-    filter: drop-shadow(0 0 20px var(--nitro));
-  }
-  @keyframes rocketIdle {
-    from { transform: translateY(0) rotate(-2deg); }
-    to   { transform: translateY(-5px) rotate(2deg); }
-  }
+    /* ══ Titlebar z kartami ════════════════════════════════════════ */
+    #titlebar {
+      display: flex;
+      align-items: center;
+      height: 42px;
+      min-height: 42px;
+      background: var(--navbar-bg);
+      -webkit-app-region: drag;
+      padding: 0 4px 0 8px;
+      flex-shrink: 0;
+      transition: background .12s;
+    }
 
-  .exhaust {
-    position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-  }
-  .exhaust-flame { width: 6px; border-radius: 50%; animation: flicker 0.12s ease-in-out infinite alternate; }
-  .f1 { height: 28px; background: linear-gradient(to bottom, #fff, var(--nitro)); }
-  .f2 { height: 18px; width: 4px; background: linear-gradient(to bottom, var(--nitro), var(--fire)); opacity: 0.8; animation-delay: 0.04s; }
-  .f3 { height: 12px; width: 3px; background: linear-gradient(to bottom, var(--fire), transparent); opacity: 0.5; animation-delay: 0.08s; }
-  @keyframes flicker {
-    from { transform: scaleX(1) scaleY(1); }
-    to   { transform: scaleX(1.5) scaleY(0.8); opacity: 0.6; }
-  }
+    #tabs-bar {
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      height: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: none;
+      gap: 0;
+      padding: 6px 4px 0;
+      -webkit-app-region: drag;
+    }
+    #tabs-bar::-webkit-scrollbar { display: none; }
 
-  .intro-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(56px, 12vw, 90px); letter-spacing: 0.14em;
-    color: var(--nitro); text-shadow: 0 0 40px rgba(0,245,160,0.5);
-    opacity: 0; animation: introTextIn 0.6s ease 0.9s forwards;
-    margin-top: 14px;
-  }
-  @keyframes introTextIn {
-    from { opacity: 0; letter-spacing: 0.5em; }
-    to   { opacity: 1; letter-spacing: 0.14em; }
-  }
+    .tab {
+      -webkit-app-region: no-drag;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px 0 12px;
+      height: 34px;
+      min-width: 120px;
+      max-width: 240px;
+      border-radius: 12px 12px 0 0;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      font-size: 12.5px;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: visible;
+      flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
 
-  /* STARS */
-  #stars { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .star {
-    position: absolute; background: white; border-radius: 50%;
-    animation: twinkle var(--d) ease-in-out infinite alternate;
-    animation-delay: var(--dl);
-  }
-  @keyframes twinkle {
-    from { opacity: var(--o1); } to { opacity: var(--o2); }
-  }
+    /* Separator między kartami */
+    .tab + .tab::before {
+      content: '';
+      position: absolute;
+      left: 0px;
+      top: 20%;
+      height: 60%;
+      width: 1px;
+      background: var(--border);
+      opacity: .35;
+      transition: opacity .15s;
+    }
+    .tab:hover + .tab::before,
+    .tab.active + .tab::before,
+    .tab + .tab:hover::before,
+    .tab + .tab.active::before { opacity: 0; }
 
-  /* SPEED LINES */
-  #speed-lines {
-    position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden;
-    opacity: 0; animation: fadeIn 0.6s ease 3.9s forwards;
-  }
-  .speed-line {
-    position: absolute; height: 1px;
-    background: linear-gradient(to right, transparent, rgba(0,245,160,0.1), transparent);
-    animation: speedMove var(--sd) linear infinite;
-    animation-delay: var(--sdl);
-    top: var(--st); width: var(--sw); left: -100%;
-  }
-  @keyframes speedMove { to { transform: translateX(300vw); } }
+    .tab:hover {
+      background: color-mix(in srgb, var(--hover) 60%, transparent);
+      color: var(--text);
+    }
+    .tab.active {
+      background: var(--input-bg);
+      color: var(--text);
+    }
+    /* Podkreślenie aktywnej karty akcentem */
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 16px; right: 16px;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+    }
+    .tab.tab-opening {
+      max-width: 0 !important;
+      min-width: 0 !important;
+      opacity: 0;
+      padding: 0 !important;
+      overflow: hidden !important;
+      pointer-events: none;
+      transition: none !important;
+    }
+    .tab.tab-closing {
+      overflow: hidden !important;
+      opacity: 0;
+      max-width: 0 !important;
+      min-width: 0 !important;
+      padding: 0 !important;
+      transition: max-width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1), opacity .15s ease, padding .22s cubic-bezier(.4,0,.2,1) !important;
+      pointer-events: none;
+    }
+    .tab.tab-dragging {
+      opacity: .85;
+      z-index: 1000;
+      box-shadow: 0 4px 20px rgba(0,0,0,.45);
+      cursor: grabbing !important;
+      transition: opacity .1s, box-shadow .1s !important;
+    }
+    .tab.drag-over {
+      transform: translateX(4px);
+    }
+    .tab-favicon {
+      width: 14px; height: 14px;
+      border-radius: 3px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+    .tab-title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12.5px;
+      min-width: 0;
+    }
+    .tab-close {
+      -webkit-app-region: no-drag;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: var(--text-dim);
+      cursor: pointer;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: background .1s, opacity .1s, color .1s;
+      padding: 0;
+      margin-left: 2px;
+    }
+    .tab-close svg { width: 9px; height: 9px; pointer-events: none; }
+    .tab:hover .tab-close,
+    .tab.active .tab-close { opacity: 1; }
+    html:not(.light) .tab-close:hover { background: rgba(255,255,255,.14); color: #fff; }
+    html.light .tab-close:hover { background: rgba(0,0,0,.1); color: #202124; }
 
-  /* NAV */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 22px 48px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    backdrop-filter: blur(12px);
-    background: rgba(5,5,7,0.75);
-    opacity: 0; transform: translateY(-16px);
-    animation: navIn 0.5s ease 4.1s forwards;
-  }
-  @keyframes navIn { to { opacity: 1; transform: none; } }
-
-  .logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px; letter-spacing: 0.15em;
-    color: var(--nitro); text-shadow: 0 0 16px rgba(0,245,160,0.4);
-    text-decoration: none;
-  }
-  .logo span { color: var(--white); }
-
-  .alpha-badge {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px; letter-spacing: 0.08em;
-    background: rgba(255,77,0,0.12);
-    border: 1px solid rgba(255,77,0,0.35);
-    color: #ff6b2b; padding: 5px 13px; border-radius: 2px;
-  }
-
-  /* HERO */
-  main { position: relative; z-index: 2; }
-
-  .hero {
-    min-height: 100vh;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    text-align: center; padding: 120px 24px 80px; position: relative;
-  }
-
-  .hero-glow {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -60%);
-    width: 500px; height: 500px; border-radius: 50%;
-    background: radial-gradient(circle, rgba(0,245,160,0.055) 0%, transparent 70%);
-    pointer-events: none; animation: pulseGlow 4s ease-in-out infinite;
-  }
-  @keyframes pulseGlow {
-    0%, 100% { transform: translate(-50%,-60%) scale(1); opacity: 1; }
-    50%       { transform: translate(-50%,-60%) scale(1.2); opacity: 0.5; }
-  }
-
-  .hero-tag {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--nitro);
-    margin-bottom: 20px; opacity: 0; animation: fadeUp 0.6s ease 4.3s forwards;
-  }
-  .hero-tag::before, .hero-tag::after { content: '—'; margin: 0 10px; color: var(--muted); }
-
-  .hero-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(90px, 20vw, 210px); line-height: 0.88; letter-spacing: 0.04em;
-    background: linear-gradient(140deg, #ffffff 0%, #b0ffe4 45%, #00f5a0 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    filter: drop-shadow(0 0 50px rgba(0,245,160,0.25));
-    opacity: 0; animation: fadeUp 0.7s ease 4.5s forwards;
-  }
-
-  .hero-slogan {
-    font-size: clamp(17px, 2.5vw, 22px); font-weight: 600; color: var(--muted);
-    margin-top: 28px; line-height: 1.6;
-    opacity: 0; animation: fadeUp 0.7s ease 4.7s forwards;
-  }
-  .hero-slogan em { font-style: normal; color: var(--white); font-weight: 700; }
-
-  .hero-actions {
-    display: flex; gap: 14px; margin-top: 44px;
-    flex-wrap: wrap; justify-content: center;
-    opacity: 0; animation: fadeUp 0.7s ease 4.9s forwards;
-  }
-
-  .btn-primary {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--bg); background: var(--nitro); border: none;
-    padding: 15px 38px; border-radius: 3px; cursor: none; text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s; position: relative; overflow: hidden;
-  }
-  .btn-primary::after {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,0.25) 55%, transparent 65%);
-    transform: translateX(-100%); transition: transform 0.5s;
-  }
-  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 28px rgba(0,245,160,0.45); }
-  .btn-primary:hover::after { transform: translateX(100%); }
-
-  .btn-ghost {
-    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--white); background: transparent;
-    border: 1px solid rgba(255,255,255,0.13);
-    padding: 15px 38px; border-radius: 3px; cursor: none; text-decoration: none;
-    transition: border-color 0.2s, color 0.2s;
-    appearance: none; -webkit-appearance: none;
-    display: inline-block; line-height: normal;
-  }
-  .btn-ghost:hover { border-color: var(--nitro); color: var(--nitro); }
-
-  .alpha-warning {
-    margin-top: 44px;
-    background: rgba(255,77,0,0.06); border: 1px solid rgba(255,77,0,0.18);
-    border-radius: 4px; padding: 13px 26px;
-    display: inline-flex; align-items: center; gap: 12px;
-    font-family: 'DM Mono', monospace; font-size: 12px; color: #ff7a45; letter-spacing: 0.05em;
-    opacity: 0; animation: fadeUp 0.7s ease 5.1s forwards;
-  }
-  .alpha-dot {
-    width: 8px; height: 8px; background: #ff4d00; border-radius: 50%; flex-shrink: 0;
-    box-shadow: 0 0 10px #ff4d00; animation: dotPulse 1.5s ease-in-out infinite;
-  }
-  @keyframes dotPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50%       { transform: scale(1.6); opacity: 0.4; }
-  }
-
-  .scroll-hint {
-    position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
-    opacity: 0; animation: fadeIn 0.6s ease 5.5s forwards;
-  }
-  .scroll-hint span { font-size: 10px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
-  .scroll-bar {
-    width: 1px; height: 44px;
-    background: linear-gradient(to bottom, var(--nitro), transparent);
-    animation: scrollBar 1.6s ease-in-out infinite;
-  }
-  @keyframes scrollBar {
-    0%, 100% { opacity: 0.2; transform: scaleY(0.4); transform-origin: top; }
-    50%       { opacity: 1; transform: scaleY(1); }
-  }
-
-  /* ABOUT */
-  .about {
-    padding: 100px 48px 80px;
-    max-width: 800px; margin: 0 auto; text-align: center;
-  }
-  .section-label {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 0.2em; text-transform: uppercase; color: var(--nitro); margin-bottom: 20px;
-  }
-  .about-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(38px, 7vw, 72px); letter-spacing: 0.06em; line-height: 1;
-    color: var(--white); margin-bottom: 32px;
-  }
-  .about-text {
-    font-size: 16px; color: var(--muted); line-height: 1.85; max-width: 580px; margin: 0 auto;
-  }
-  .about-text em { font-style: normal; color: var(--white); font-weight: 600; }
-
-  /* ALPHA SECTION */
-  .alpha-section { padding: 0 48px 120px; max-width: 800px; margin: 0 auto; }
-  .alpha-box {
-    border: 1px solid rgba(255,77,0,0.2); border-radius: 6px;
-    background: rgba(255,77,0,0.04); padding: 52px; text-align: center;
-  }
-  .alpha-box .big-badge {
-    font-family: 'DM Mono', monospace; font-size: 12px;
-    letter-spacing: 0.25em; color: #ff6b2b; margin-bottom: 18px; display: block;
-  }
-  .alpha-box h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(32px, 5vw, 54px); letter-spacing: 0.06em;
-    color: var(--white); margin-bottom: 20px;
-  }
-  .alpha-box p { font-size: 15px; color: var(--muted); line-height: 1.8; max-width: 480px; margin: 0 auto; }
-
-  /* FOOTER */
-  footer {
-    border-top: 1px solid rgba(255,255,255,0.05);
-    padding: 44px 48px;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 20px;
-  }
-  .footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 0.15em; color: var(--nitro); }
-  .footer-copy { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
-  .footer-alpha {
-    font-family: 'DM Mono', monospace; font-size: 11px; color: #ff6b2b;
-    background: rgba(255,77,0,0.1); border: 1px solid rgba(255,77,0,0.22);
-    padding: 5px 13px; border-radius: 2px; letter-spacing: 0.08em;
-  }
-  .footer-contact {
-    font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
-    letter-spacing: 0.05em; width: 100%;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    padding-top: 20px; text-align: center;
-  }
-  .footer-contact a {
-    color: var(--nitro); text-decoration: none;
-    transition: text-shadow 0.2s;
-  }
-  .footer-contact a:hover {
-    text-shadow: 0 0 12px rgba(0,245,160,0.6);
-  }
-
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
-  @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
-
-  .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
-  .reveal.visible { opacity: 1; transform: none; }
-
-  @media (max-width: 640px) {
-    nav {
+    /* ── Tab tooltip ── */
+    .tab-tooltip {
+      pointer-events: none;
+      position: fixed;
+      z-index: 99998;
+      background: var(--settings-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 14px 18px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.45);
+      min-width: 220px;
+      max-width: 360px;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity .15s, transform .15s;
+    }
+    .tab-tooltip.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .tab-tooltip-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      white-space: normal; word-break: break-word;
+      line-height: 1.5; margin-bottom: 7px;
+    }
+    .tab-tooltip-domain {
+      font-size: 12.5px; color: var(--text-dim);
+      margin-bottom: 10px;
+    }
+    .tab-tooltip-divider {
+      height: 1px; background: var(--border); opacity: .5;
+      margin-bottom: 10px;
+    }
+    .tab-tooltip-ram {
+      font-size: 12.5px; color: var(--text-dim);
+      display: flex; align-items: center; gap: 7px;
+    }
+    .tab-tooltip-ram-label { color: var(--text-dim); }
+    .tab-tooltip-ram-value { color: var(--text); font-weight: 600; }
+    .tab-tooltip-ram svg { width: 13px; height: 13px; flex-shrink: 0; color: var(--accent); }
+
+    #tab-new-btn {
+      z-index: 10;
+      position: relative;
+      -webkit-app-region: no-drag;
+      width: 26px; height: 26px;
+      border: none;
+      background: transparent;
+      color: var(--icon);
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      align-self: center;
+      margin-bottom: 2px;
+      transition: background .12s, color .12s;
+    }
+    #tab-new-btn:hover { background: var(--hover); color: var(--text); }
+    #tab-new-btn svg { width: 14px; height: 14px; pointer-events: none; }
+
+    .win-btns {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      -webkit-app-region: no-drag;
+      margin-left: 4px;
+    }
+    .win-btn {
+      width: 32px; height: 32px;
+      border: none; background: transparent;
+      color: var(--win-text);
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+    }
+    .win-btn svg { width: 14px; height: 14px; pointer-events: none; }
+    .win-btn:hover { background: var(--hover); color: var(--text); }
+    .win-btn.close:hover { background: #c42b1c; color: #fff; }
+
+    /* ══ Navbar ═══════════════════════════════════════════════════ */
+    #navbar {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px 8px;
+      background: var(--navbar-bg);
+      flex-shrink: 0;
+      transition: background .12s;
+    }
+    .nav-btn {
+      width: 36px; height: 36px;
+      border: none; background: transparent;
+      color: var(--icon);
+      border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .nav-btn svg { width: 18px; height: 18px; pointer-events: none; }
+    .nav-btn:hover { background: var(--hover); color: var(--text); }
+    .nav-btn:disabled { opacity: .35; cursor: default; pointer-events: none; }
+
+    /* ── url-wrap ze zwężaniem przy pobieraniu ── */
+    #url-wrap {
+      flex: 1;
+      display: flex; align-items: center;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      padding: 0 14px; height: 36px; gap: 8px;
+      transition: border-color .2s, background .2s, box-shadow .2s,
+                  max-width .35s cubic-bezier(.4,0,.2,1),
+                  margin-left .4s cubic-bezier(.4,0,.2,1),
+                  margin-right .4s cubic-bezier(.4,0,.2,1);
+      min-width: 0;
+      overflow: hidden;
+      margin-left: 50px;
+      margin-right: 50px;
+    }
+    #url-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+    #url-wrap.bar-expanded {
+      margin-left: 0;
+      margin-right: 0;
+    }
+    /* Kiedy trwa pobieranie — zwęź pasek URL żeby zrobiło się miejsce na ikonkę */
+    #url-wrap.bar-expanded.downloading {
+      max-width: calc(100% - 52px);
+    }
+
+    /* Gdy pasek NIE jest rozszerzony — dl-toggle-btn zawsze zajmuje swoje miejsce,
+       tylko opacity się zmienia — brak animacji kurczenia paska URL */
+    #navbar.bar-compact #dl-toggle-btn {
+      width: 36px !important;
+      overflow: visible !important;
+      margin-left: 0 !important;
+      transition: background .15s, color .15s, opacity .3s ease !important;
+    }
+
+    #url-icon {
+      flex-shrink: 0; display: flex;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 2px;
+      margin: -2px;
+      transition: background .12s;
+    }
+    #url-icon:hover { background: var(--hover); }
+    #url-icon svg { width: 14px; height: 14px; pointer-events: none; }
+
+    /* ── Popup bezpieczeństwa ── */
+    #sec-popup {
+      display: none;
+      position: fixed;
+      top: 88px;
+      left: 0; /* ustawiane dynamicznie */
+      width: 300px;
+      background: var(--dd-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      z-index: 9999;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+    }
+    #sec-popup.open { display: block; animation: dd-in .15s ease; }
+
+    .sec-header {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .sec-header svg { flex-shrink: 0; }
+    .sec-title { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    .sec-desc {
+      font-size: 12px; color: var(--text-dim);
+      line-height: 1.6; margin-bottom: 14px;
+    }
+
+    .sec-cert-btn {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px; background: transparent;
+      color: var(--text); font-size: 13px; font-family: inherit;
+      cursor: pointer; text-align: left;
+      transition: background .12s;
+    }
+    .sec-cert-btn:hover { background: var(--hover); }
+    .sec-cert-btn svg { width: 14px; height: 14px; color: var(--text-dim); pointer-events: none; }
+    .sec-cert-status {
+      font-size: 12px; font-weight: 500;
+    }
+    .sec-cert-status.valid   { color: #34a853; }
+    .sec-cert-status.invalid { color: #e57373; }
+    #url-input {
+      flex: 1; background: transparent;
+      border: none; outline: none;
+      color: var(--text); font-size: 14px; font-family: inherit;
+      transition: color .2s;
+      min-width: 0;
+    }
+    #url-input::placeholder { color: var(--text-dim); }
+
+    #menu-btn {
+      width: 36px; height: 36px;
+      border: none; background: transparent;
+      color: var(--icon); border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s; flex-shrink: 0;
+    }
+    #menu-btn svg { width: 20px; height: 20px; pointer-events: none; }
+    #menu-btn:hover { background: var(--hover); color: var(--text); }
+
+    /* ══ Przycisk pobierania obok 3 kropek ════════════════════════ */
+    #dl-toggle-btn {
+      width: 36px; height: 36px;
+      border: none; background: transparent;
+      color: var(--icon); border-radius: 50%; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      position: relative;
+      transition: background .15s, color .15s,
+                  opacity .3s ease, transform .3s cubic-bezier(.4,0,.2,1),
+                  width .35s cubic-bezier(.4,0,.2,1),
+                  margin .35s cubic-bezier(.4,0,.2,1);
+      /* Domyślnie ukryty — pojawia się animacją */
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+      pointer-events: none;
+      margin-left: 0;
+    }
+    #dl-toggle-btn.visible {
+      opacity: 1;
+      width: 36px;
+      pointer-events: all;
+      margin-left: 0px;
+    }
+    #dl-toggle-btn:hover { background: var(--hover); color: var(--text); }
+    #dl-toggle-btn svg { width: 18px; height: 18px; pointer-events: none; flex-shrink: 0; }
+
+    /* Mała kropka "w toku" na ikonce pobierania */
+    #dl-toggle-btn .dl-badge {
+      position: absolute;
+      top: 5px; right: 5px;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--navbar-bg);
+      display: none;
+    }
+    #dl-toggle-btn.active .dl-badge { display: block; }
+
+    /* ══ Panel pobierania (dropdown) ══════════════════════════════ */
+    #dl-panel {
+      display: none;
+      position: fixed;
+      top: 88px;
+      right: 48px;
+      width: 340px;
+      max-height: 420px;
+      background: var(--dd-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 8px 0;
+      z-index: 9998;
+      box-shadow: 0 8px 32px rgba(0,0,0,.4);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    #dl-panel.open {
+      display: block;
+      will-change: transform, opacity;
+      animation: dd-in .13s ease;
+    }
+    #dl-panel::-webkit-scrollbar { width: 5px; }
+    #dl-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .dl-panel-header {
+      display: flex; align-items: center;
       justify-content: space-between;
+      padding: 8px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
     }
-    .logo { font-size: 20px; }
-    .logo img { height: 24px; width: 24px; margin-right: 7px; }
-    .alpha-badge { font-size: 10px; padding: 4px 9px; }
+    .dl-panel-title {
+      font-size: 13px; font-weight: 700;
+      color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .07em;
+    }
+    #dl-clear-btn {
+      border: none; background: transparent;
+      color: var(--text-dim); font-size: 12px;
+      font-family: inherit; cursor: pointer;
+      padding: 3px 8px; border-radius: 6px;
+      transition: background .12s, color .12s;
+    }
+    #dl-clear-btn:hover { background: var(--hover); color: var(--text); }
 
-    .hero {
-      padding: 100px 18px 80px;
+    /* Pojedynczy wpis pobierania */
+    .dl-item {
+      padding: 10px 16px;
+      transition: background .1s;
+    }
+    .dl-item:hover { background: var(--hover); }
+
+    .dl-item-top {
+      display: flex; align-items: center;
+      gap: 10px; margin-bottom: 6px;
+    }
+    .dl-item-icon {
+      width: 28px; height: 28px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px;
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      color: var(--accent);
+    }
+    .dl-item-icon svg { width: 15px; height: 15px; }
+    .dl-item-icon.done { background: color-mix(in srgb, #34a853 15%, transparent); color: #34a853; }
+    .dl-item-icon.error { background: color-mix(in srgb, #e57373 15%, transparent); color: #e57373; }
+
+    .dl-item-info { flex: 1; min-width: 0; }
+    .dl-item-name {
+      font-size: 13px; font-weight: 500;
+      color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-bottom: 2px;
+    }
+    .dl-item-meta {
+      font-size: 11px; color: var(--text-dim);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* Przycisk otwórz folder w panelu pobierania */
+    .dl-item-folder-btn {
+      width: 28px; height: 28px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer;
+      transition: background .12s, color .12s;
+      opacity: 0;
+    }
+    .dl-item:hover .dl-item-folder-btn { opacity: 1; }
+    .dl-item-folder-btn:hover { background: var(--hover); color: var(--text); }
+    .dl-item-folder-btn svg { width: 15px; height: 15px; pointer-events: none; }
+
+    /* Plik usunięty/przeniesiony — w historii pobierania */
+    .dl-history-item.file-missing { cursor: default !important; }
+    .dl-history-item.file-missing .dl-history-name { color: var(--text-dim); text-decoration: line-through; }
+    .dl-history-item.file-missing .dl-history-icon { background: color-mix(in srgb, var(--border) 40%, transparent); color: var(--text-dim); }
+    .dl-history-meta.missing { color: #e57373!important; }
+    .dl-history-icon.missing { background: color-mix(in srgb, #e57373 12%, transparent)!important; color: #e57373!important; }
+    .dl-history-missing-badge {
+      font-size: 11px; color: #e57373;
+      background: color-mix(in srgb, #e57373 12%, transparent);
+      border: 1px solid color-mix(in srgb, #e57373 30%, transparent);
+      border-radius: 4px; padding: 1px 6px;
+      white-space: nowrap; flex-shrink: 0;
+      margin-right: 4px;
+    }
+
+    /* Ikonka folderu w historii pobierania */
+    .dl-history-folder-btn {
+      width: 26px; height: 26px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer;
+      transition: background .12s, color .12s;
+      opacity: 0;
+    }
+    .dl-history-item:hover .dl-history-folder-btn { opacity: 1; }
+    .dl-history-item.file-missing:hover .dl-history-folder-btn { opacity: 0 !important; pointer-events: none; }
+    .dl-history-folder-btn:hover { background: var(--hover); color: var(--text); }
+    .dl-history-folder-btn svg { width: 14px; height: 14px; pointer-events: none; }
+
+    /* Pasek postępu */
+    .dl-progress-bar-wrap {
+      height: 4px; border-radius: 2px;
+      background: var(--border);
+      overflow: hidden;
+    }
+    .dl-progress-bar {
+      height: 100%; border-radius: 2px;
+      background: var(--accent);
+      transition: width .3s linear;
+      width: 0%;
+    }
+    .dl-progress-bar.done   { background: #34a853; }
+    .dl-progress-bar.error  { background: #e57373; }
+    /* Animacja nieskończona gdy rozmiar nieznany */
+    .dl-progress-bar.indeterminate {
+      width: 40% !important;
+      animation: dl-indeterminate 1.4s ease-in-out infinite;
+    }
+    @keyframes dl-indeterminate {
+      0%   { transform: translateX(-150%); }
+      100% { transform: translateX(350%); }
+    }
+
+    /* ══ Dropdown ═════════════════════════════════════════════════ */
+    #dropdown {
+      display: none; position: fixed;
+      top: 88px; right: 8px;
+      background: var(--dd-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 6px;
+      min-width: 200px; z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      transition: background .2s, border-color .2s;
+    }
+    #dropdown.open { display: block; animation: dd-in .13s ease; }
+    @keyframes dd-in {
+      from { opacity:0; transform: translateY(-5px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .dd-btn {
+      width: 100%; display: flex; align-items: center; gap: 12px;
+      padding: 9px 12px; border: none; background: transparent;
+      color: var(--text); border-radius: 8px;
+      font-size: 14px; font-family: inherit; cursor: pointer; text-align: left;
+      transition: background .12s;
+    }
+    .dd-btn svg { width: 17px; height: 17px; color: var(--text-dim); flex-shrink: 0; pointer-events: none; }
+    .dd-btn:hover { background: var(--hover); }
+
+    /* ══ Ustawienia overlay ═══════════════════════════════════════ */
+    #settings-overlay, #history-overlay, #bk-modal-overlay {
+      pointer-events: none;
+    }
+    #settings-overlay.open, #history-overlay.open, #bk-modal-overlay.open {
+      pointer-events: all;
+    }
+
+    #settings-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 8888; background: rgba(0,0,0,.5);
+      align-items: center; justify-content: center;
+    }
+    #settings-overlay.open { display: flex; animation: fade-in .18s ease; pointer-events: all; }
+    @keyframes fade-in { from{opacity:0} to{opacity:1} }
+
+    #settings-panel {
+      background: var(--settings-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 760px; height: 520px;
+      display: flex; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+      will-change: transform, opacity;
+      animation: panel-in .18s ease;
+      transition: background .2s, border-color .2s;
+    }
+    @keyframes panel-in {
+      from { transform: translateY(10px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    #settings-sidebar {
+      width: 200px;
+      background: var(--settings-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 16px 8px; flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 2px;
+      transition: background .2s, border-color .2s;
+    }
+    .settings-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-dim); padding: 4px 12px 12px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: var(--text);
+      transition: background .12s;
+    }
+    .sidebar-item svg { width: 17px; height: 17px; color: var(--text-dim); flex-shrink: 0; pointer-events: none; }
+    .sidebar-item:hover { background: var(--settings-item-hover); }
+    .sidebar-item.active { background: var(--settings-active); font-weight: 600; }
+    .sidebar-item.active svg { color: var(--accent); }
+
+    #settings-content { flex: 1; overflow-y: auto; padding: 24px 28px; }
+    .settings-section { display: none; }
+    .settings-section.active { display: block; }
+
+    .settings-top {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 24px;
+    }
+    .section-heading { font-size: 20px; font-weight: 700; }
+
+    .icon-btn {
+      width: 32px; height: 32px; border: none;
+      background: transparent; color: var(--text-dim);
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s;
+    }
+    .icon-btn:hover { background: var(--hover); color: var(--text); }
+    .icon-btn svg { width: 16px; height: 16px; pointer-events: none; }
+
+    .setting-row {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      transition: border-color .2s;
+    }
+    .setting-row:last-child { border-bottom: none; }
+    .setting-label { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .setting-desc  { font-size: 13px; color: var(--text-dim); }
+
+    .theme-options { display: flex; gap: 16px; margin-top: 16px; }
+    .theme-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+    .theme-card {
+      width: 110px; height: 76px;
+      border-radius: 10px;
+      border: 2.5px solid var(--border);
+      overflow: hidden; position: relative;
+      transition: border-color .2s, transform .15s;
+      pointer-events: none;
+    }
+    .theme-wrap:hover .theme-card { transform: scale(1.04); }
+    .theme-wrap.selected .theme-card { border-color: var(--accent); }
+    .tc-bar { height: 22px; display: flex; align-items: center; padding: 0 8px; gap: 5px; }
+    .tc-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .tc-body { flex: 1; }
+    .dark-card .tc-bar  { background: #202124; }
+    .dark-card .tc-dot  { background: #5f6368; }
+    .dark-card .tc-body { background: #303134; height: 54px; }
+    .light-card .tc-bar  { background: #f1f3f4; }
+    .light-card .tc-dot  { background: #bdc1c6; }
+    .light-card .tc-body { background: #ffffff; height: 54px; }
+    .tc-check {
+      position: absolute; bottom: 6px; right: 6px;
+      width: 20px; height: 20px;
+      background: var(--accent); border-radius: 50%;
+      display: none; align-items: center; justify-content: center;
+    }
+    .theme-wrap.selected .tc-check { display: flex; }
+    .tc-check svg { width: 12px; height: 12px; stroke: #fff; pointer-events: none; }
+    .theme-card-label { font-size: 13px; color: var(--text-dim); }
+
+    /* ── Toggle switch ── */
+    .setting-row-inline {
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+      transition: border-color .2s;
     }
-    .hero-glow { width: 280px; height: 280px; }
-    .hero-title {
-      font-size: clamp(72px, 22vw, 110px);
+    .setting-row-inline:last-child { border-bottom: none; }
+    .setting-row-inline-text .setting-label { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .setting-row-inline-text .setting-desc  { font-size: 13px; color: var(--text-dim); }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track {
+      position: absolute; inset: 0;
+      background: var(--border);
+      border-radius: 99px;
+      cursor: pointer;
+      transition: background .25s cubic-bezier(.4,0,.2,1);
+    }
+    .toggle-thumb {
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 4px rgba(0,0,0,.3);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      pointer-events: none;
+    }
+    .toggle-switch input:checked ~ .toggle-track { background: var(--accent); }
+    .toggle-switch input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+    /* ══ Pasek zakładek (bookmarks) ═══════════════════════════════ */
+    #bookmarks-bar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding: 0 8px 6px;
+      background: var(--navbar-bg);
+      flex-shrink: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+      transition: background .12s;
+      min-height: 32px;
+    }
+    #bookmarks-bar::-webkit-scrollbar { display: none; }
+
+    .bk-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 10px;
+      border: none; background: transparent;
+      color: var(--text);
+      border-radius: 6px;
+      font-size: 13px; font-family: inherit;
+      cursor: pointer; white-space: nowrap;
+      max-width: 160px;
+      transition: background .12s;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .bk-item:hover { background: var(--hover); }
+    .bk-item img { width: 14px; height: 14px; border-radius: 2px; flex-shrink: 0; object-fit: contain; }
+    .bk-item .bk-name { overflow: hidden; text-overflow: ellipsis; }
+    .bk-item .bk-delete {
+      display: none;
+      position: absolute; top: 2px; right: 2px;
+      width: 14px; height: 14px;
+      background: var(--border); border-radius: 50%;
+      font-size: 9px; line-height: 14px;
+      text-align: center; color: var(--text);
+      cursor: pointer; z-index: 1;
+    }
+    .bk-item:hover .bk-delete { display: block; }
+
+    #bk-add-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      border: 1.5px dashed var(--border);
+      background: transparent; color: var(--text-dim);
+      border-radius: 6px; font-size: 13px; font-family: inherit;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    #bk-add-btn:hover {
+      border-color: var(--accent); color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+
+    /* Modal zakładki */
+    #bk-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 9999; background: rgba(0,0,0,.45);
+      align-items: center; justify-content: center;
+    }
+    #bk-modal-overlay.open { display: flex; animation: fade-in .15s ease; pointer-events: all; }
+    #bk-modal {
+      background: var(--settings-bg);
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 24px; width: 360px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.4);
+      will-change: transform, opacity;
+      animation: panel-in .15s ease;
+    }
+    #bk-modal h3 { font-size: 17px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+    .bk-field { margin-bottom: 14px; }
+    .bk-field label {
+      display: block; font-size: 12px; font-weight: 600;
+      color: var(--text-dim); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .bk-field input {
+      width: 100%; background: var(--input-bg);
+      border: 1.5px solid var(--border); border-radius: 8px;
+      padding: 9px 12px; font-size: 14px; font-family: inherit;
+      color: var(--text); outline: none; transition: border-color .15s;
+    }
+    .bk-field input:focus { border-color: var(--accent); }
+    .bk-field input::placeholder { color: var(--text-dim); }
+    .bk-modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+    .bk-modal-btns button {
+      padding: 8px 18px; border-radius: 8px; border: none;
+      font-size: 14px; font-family: inherit; cursor: pointer;
+      font-weight: 500; transition: background .12s;
+    }
+    .btn-cancel { background: var(--hover); color: var(--text); }
+    .btn-cancel:hover { background: var(--border); }
+    .btn-save { background: var(--accent); color: #fff; }
+    .btn-save:hover { opacity: .88; }
+
+    /* ══ Pasek aktualizacji ═══════════════════════════════════════ */
+    /* ── Overlay aktualizacji ── */
+    #update-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(0,0,0,.72);
+      align-items: center;
+      justify-content: center;
+      animation: uo-fade .2s ease;
+    }
+    #update-overlay.open { display: flex; }
+    @keyframes uo-fade { from { opacity:0 } to { opacity:1 } }
+    #update-card {
+      background: var(--settings-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 52px 40px;
+      max-width: 480px; width: 90%;
+      display: flex; flex-direction: column; align-items: center;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5);
+      will-change: transform, opacity;
+      animation: uo-up .25s cubic-bezier(.22,1,.36,1);
       text-align: center;
-      width: 100%;
     }
-    .hero-slogan {
-      font-size: 15px;
-      text-align: center;
-      padding: 0 10px;
+    @keyframes uo-up { from { transform:translateY(16px);opacity:0 } to { transform:none;opacity:1 } }
+    #update-card-icon {
+      width: 64px; height: 64px; border-radius: 18px;
+      background: color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 24px;
     }
-    .hero-actions {
+    #update-card-icon svg { width: 32px; height: 32px; }
+    #update-card-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 10px; line-height: 1.3; }
+    #update-card-sub   { font-size: 14px; color: var(--text-dim); margin-bottom: 32px; line-height: 1.6; }
+    #update-progress-wrap { width:100%; margin-bottom:28px; display:none; }
+    #update-progress-bar  { width:100%; height:6px; background:var(--border); border-radius:3px; overflow:hidden; margin-bottom:8px; }
+    #update-progress-fill { height:100%; border-radius:3px; background:var(--accent); transition:width .3s linear; width:0%; }
+    #update-progress-label { font-size:12px; color:var(--text-dim); text-align:right; }
+    #update-btn-now {
+      width: 100%; padding: 13px; border: none; border-radius: 12px;
+      background: var(--accent); color: #fff;
+      font-size: 15px; font-family: inherit; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, transform .1s; margin-bottom: 12px;
+    }
+    #update-btn-now:hover { opacity:.88; transform:translateY(-1px); }
+    #update-btn-later {
+      position: fixed; bottom: 28px; right: 28px;
+      padding: 10px 20px; border: 1px solid var(--border); border-radius: 10px;
+      background: var(--settings-bg); color: var(--text-dim);
+      font-size: 13px; font-family: inherit; cursor: pointer;
+      transition: background .12s, color .12s;
+    }
+    #update-btn-later:hover { background: var(--hover); color: var(--text); }
+
+    /* ── Custom context menu ── */
+    #ctx-menu {
+      display: none;
+      position: fixed;
+      z-index: 999999;
+      min-width: 200px;
+      background: #1e1f22;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 10px;
+      padding: 5px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.4);
+      animation: ctx-pop .12s cubic-bezier(.22,1,.36,1);
+      user-select: none;
+    }
+    html.light #ctx-menu {
+      background: #ffffff;
+      border-color: rgba(0,0,0,.1);
+      box-shadow: 0 8px 32px rgba(0,0,0,.18), 0 2px 8px rgba(0,0,0,.1);
+    }
+    @keyframes ctx-pop {
+      from { transform: translateY(-4px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    #ctx-menu.open { display: block; }
+
+    /* Transparentna nakładka pod ctx-menu — łapie kliknięcia w webview */
+    #ctx-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 999998; /* tuż pod ctx-menu (999999) */
+      background: transparent;
+      cursor: default;
+    }
+    #ctx-backdrop.open { display: block; }
+    .ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text);
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .ctx-item:hover { background: var(--hover); }
+    .ctx-item svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--text-dim); }
+    .ctx-item-danger { color: #e57373; }
+    .ctx-item-danger svg { color: #e57373; }
+    .ctx-item-danger:hover { background: color-mix(in srgb, #e57373 12%, transparent) !important; }
+
+    /* Tryby ctx-menu */
+    #ctx-menu.mode-webview   .ctx-mode-bookmark { display: none; }
+    #ctx-menu.mode-bookmark  .ctx-mode-webview  { display: none; }
+
+    /* ── Modal certyfikatu ── */
+    #cert-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 99999; background: rgba(0,0,0,.5);
+      align-items: center; justify-content: center;
+    }
+    #cert-modal-overlay.open { display: flex; animation: fade-in .18s ease; }
+    #cert-modal {
+      background: var(--settings-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 680px; height: 540px;
+      display: flex; overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+      will-change: transform, opacity;
+      animation: panel-in .18s ease;
+    }
+    /* Sidebar */
+    #cert-sidebar {
+      width: 180px; flex-shrink: 0;
+      background: var(--settings-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 16px 8px;
+      gap: 2px;
+    }
+    .cert-sidebar-title {
+      font-size: 12px; font-weight: 700; color: var(--text-dim);
+      padding: 4px 12px 12px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .cert-sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: var(--text);
+      transition: background .12s;
+    }
+    .cert-sidebar-item svg { width: 16px; height: 16px; color: var(--text-dim); flex-shrink: 0; }
+    .cert-sidebar-item:hover { background: var(--settings-item-hover); }
+    .cert-sidebar-item.active { background: var(--settings-active); font-weight: 600; }
+    .cert-sidebar-item.active svg { color: var(--accent); }
+    /* Główna treść */
+    #cert-main {
+      flex: 1; display: flex; flex-direction: column; min-width: 0;
+    }
+    .cert-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .cert-modal-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .cert-modal-title svg { flex-shrink: 0; }
+    /* Sekcje */
+    .cert-section-wrap {
+      display: none; flex: 1; overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .cert-section-wrap::-webkit-scrollbar { width: 5px; }
+    .cert-section-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .cert-section-wrap.active { display: block; }
+    .cert-section { margin-bottom: 18px; }
+    .cert-section-title {
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 8px;
+    }
+    .cert-row {
+      display: flex; gap: 8px;
+      padding: 7px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; flex-wrap: wrap;
+    }
+    .cert-row:last-child { border-bottom: none; }
+    .cert-row-label { color: var(--text-dim); min-width: 130px; flex-shrink: 0; }
+    .cert-row-value { color: var(--text); word-break: break-all; flex: 1; min-width: 0; }
+    .cert-validity-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .cert-validity-badge.valid   { background: color-mix(in srgb, #34a853 15%, transparent); color: #34a853; }
+    .cert-validity-badge.invalid { background: color-mix(in srgb, #e57373 15%, transparent); color: #e57373; }
+    .ctx-separator {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+      opacity: .5;
+    }
+
+    #webview-container {
+      flex: 1;
+      display: flex;
       flex-direction: column;
-      align-items: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 0;
+      transform: translateZ(0); /* osobna warstwa GPU — nie jest przerysowywana przy overlayach */
+      contain: strict;
+    }
+    webview {
+      flex: 1;
+      display: flex;
+      width: 100%;
+      min-height: 0;
+      transform: translateZ(0);
+    }
+
+    #loader {
+      position: absolute; top: 0; left: 0;
+      height: 3px; background: var(--accent);
+      z-index: 100; border-radius: 0 2px 2px 0;
+      opacity: 0; width: 0; pointer-events: none;
+      transition: width .3s ease, opacity .3s ease;
+    }
+    #loader.active {
+      opacity: 1;
+      animation: load-anim 2.5s cubic-bezier(0.1, 0.05, 0.0, 1.0) forwards;
+    }
+    @keyframes load-anim { from{width:0} to{width:80%} }
+    #loader.done {
+      width: 100% !important;
+      animation: none;
+      opacity: 0;
+      transition: width .15s ease, opacity .3s ease .15s;
+    }
+
+    /* ══ Panel historii ═══════════════════════════════════════════ */
+    #history-overlay {
+      display: none; position: fixed; inset: 0;
+      z-index: 8888; background: rgba(0,0,0,.5);
+      align-items: center; justify-content: center;
+    }
+    #history-overlay.open { display: flex; animation: fade-in .18s ease; pointer-events: all; }
+
+    #history-panel {
+      background: var(--settings-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 760px; height: 560px;
+      display: flex;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+      will-change: transform, opacity;
+      animation: panel-in .18s ease;
+    }
+
+    /* ── Historia sidebar (jak ustawienia) ── */
+    #history-sidebar {
+      width: 200px;
+      background: var(--settings-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 16px 8px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background .2s, border-color .2s;
+    }
+    .history-sidebar-title {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-dim); padding: 4px 12px 12px;
+      letter-spacing: .08em; text-transform: uppercase;
+    }
+    .history-sidebar-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: var(--text);
+      transition: background .12s;
+    }
+    .history-sidebar-item svg { width: 17px; height: 17px; color: var(--text-dim); flex-shrink: 0; pointer-events: none; }
+    .history-sidebar-item:hover { background: var(--settings-item-hover); }
+    .history-sidebar-item.active { background: var(--settings-active); font-weight: 600; }
+    .history-sidebar-item.active svg { color: var(--accent); }
+
+    /* ── Historia main content ── */
+    #history-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+    .history-section {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      overflow: hidden;
+    }
+    .history-section.active {
+      display: flex;
+    }
+
+    #history-header, #dl-history-header {
+      display: flex; align-items: center;
+      padding: 20px 24px 16px;
       gap: 12px;
-      width: 100%;
-      padding: 0 18px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
     }
-    .btn-primary, .btn-ghost {
-      width: 100%;
-      text-align: center;
-      padding: 14px 20px;
-      font-size: 12px;
+    #history-header h2, #dl-history-header h2 { font-size: 18px; font-weight: 700; flex: 1; margin: 0; }
+
+    #history-search-wrap, #dl-history-search-wrap {
+      display: flex; align-items: center;
+      background: var(--input-bg);
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      padding: 0 12px; height: 34px; gap: 8px;
+      transition: border-color .2s;
+      width: 220px;
     }
-    .alpha-warning {
-      margin-top: 28px;
-      padding: 11px 16px;
-      font-size: 11px;
-      text-align: left;
-      width: 100%;
+    #history-search-wrap:focus-within, #dl-history-search-wrap:focus-within { border-color: var(--accent); }
+    #history-search-wrap svg, #dl-history-search-wrap svg { width: 14px; height: 14px; color: var(--text-dim); flex-shrink: 0; }
+    #history-search, #dl-history-search {
+      flex: 1; background: transparent;
+      border: none; outline: none;
+      color: var(--text); font-size: 13px; font-family: inherit;
+      user-select: text; -webkit-user-select: text;
+      pointer-events: all; cursor: text;
+    }
+    #history-search::placeholder, #dl-history-search::placeholder { color: var(--text-dim); }
+
+    #history-clear-btn, #dl-history-clear-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: transparent; color: var(--text-dim);
+      border-radius: 8px; font-size: 13px;
+      font-family: inherit; cursor: pointer;
+      transition: background .12s, color .12s, border-color .12s;
+      flex-shrink: 0;
+    }
+    #history-clear-btn:hover, #dl-history-clear-btn:hover { background: #c42b1c22; color: #e57373; border-color: #c42b1c55; }
+    #history-clear-btn svg, #dl-history-clear-btn svg { width: 14px; height: 14px; pointer-events: none; }
+
+    #history-close-btn, #dl-history-close-btn {
+      width: 30px; height: 30px; border: none;
+      background: transparent; color: var(--text-dim);
+      border-radius: 8px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s; flex-shrink: 0;
+    }
+    #history-close-btn:hover, #dl-history-close-btn:hover { background: var(--hover); color: var(--text); }
+    #history-close-btn svg, #dl-history-close-btn svg { width: 16px; height: 16px; pointer-events: none; }
+
+    #history-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    #history-list::-webkit-scrollbar { width: 6px; }
+    #history-list::-webkit-scrollbar-track { background: transparent; }
+    #history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .history-day-label {
+      font-size: 11px; font-weight: 700; color: var(--text-dim);
+      padding: 10px 24px 4px;
+      text-transform: uppercase; letter-spacing: .08em;
+    }
+    .history-item {
+      display: flex; align-items: center;
+      padding: 8px 24px; gap: 12px; cursor: pointer;
+      transition: background .1s;
+    }
+    .history-item:hover { background: var(--hover); }
+    .history-item:hover .history-delete { opacity: 1; }
+    .history-favicon { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; object-fit: contain; }
+    .history-info { flex: 1; min-width: 0; }
+    .history-title { font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .history-url   { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+    .history-time  { font-size: 12px; color: var(--text-dim); flex-shrink: 0; white-space: nowrap; }
+    .history-delete {
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: background .12s, opacity .12s, color .12s;
+    }
+    .history-delete:hover { background: #c42b1c22; color: #e57373; }
+    .history-delete svg { width: 14px; height: 14px; pointer-events: none; }
+
+    #history-empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; gap: 12px; color: var(--text-dim); font-size: 14px;
+    }
+    #history-empty svg { width: 48px; height: 48px; opacity: .3; }
+
+    /* ── Historia pobierania — lista ── */
+    #dl-history-list {
+      flex: 1; overflow-y: auto; padding: 8px 0;
+    }
+    #dl-history-list::-webkit-scrollbar { width: 6px; }
+    #dl-history-list::-webkit-scrollbar-track { background: transparent; }
+    #dl-history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    #dl-history-empty {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      height: 100%; gap: 12px; color: var(--text-dim); font-size: 14px;
+    }
+    #dl-history-empty svg { width: 48px; height: 48px; opacity: .3; }
+
+    .dl-history-item {
+      display: flex; align-items: center;
+      padding: 10px 24px; gap: 12px;
+      transition: background .1s;
+    }
+    .dl-history-item.clickable { cursor: pointer; }
+    .dl-history-item.clickable:hover { background: var(--hover); }
+    .dl-history-item.clickable:hover .dl-history-delete { opacity: 1; }
+    .dl-history-item:not(.clickable):hover .dl-history-delete { opacity: 1; }
+    .dl-history-item:not(.clickable):hover { background: var(--hover); }
+
+    .dl-history-icon {
+      width: 32px; height: 32px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+    }
+    .dl-history-icon.done  { background: color-mix(in srgb, #34a853 15%, transparent); color: #34a853; }
+    .dl-history-icon.error { background: color-mix(in srgb, #e57373 15%, transparent); color: #e57373; }
+    .dl-history-icon svg { width: 16px; height: 16px; }
+
+    .dl-history-info { flex: 1; min-width: 0; }
+    .dl-history-name {
+      font-size: 14px; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .dl-history-meta {
+      font-size: 12px; color: var(--text-dim); margin-top: 1px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .dl-history-time { font-size: 12px; color: var(--text-dim); flex-shrink: 0; white-space: nowrap; }
+    .dl-history-delete {
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: background .12s, opacity .12s, color .12s;
+    }
+    .dl-history-delete:hover { background: #c42b1c22; color: #e57373; }
+    .dl-history-delete svg { width: 14px; height: 14px; pointer-events: none; }
+
+    /* ── Przycisk "pokaż w folderze" ── */
+    .dl-folder-btn {
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: background .12s, opacity .12s, color .12s;
+    }
+    .dl-folder-btn:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); }
+    .dl-folder-btn svg { width: 14px; height: 14px; pointer-events: none; }
+    .dl-history-item:hover .dl-folder-btn { opacity: 1; }
+    .dl-item:hover .dl-folder-btn { opacity: 1; }
+
+    /* ── Stan "plik usunięty" ── */
+    .dl-history-item.missing { opacity: .55; }
+    .dl-history-item.missing .dl-history-name { text-decoration: line-through; }
+    .dl-missing-badge {
+      font-size: 11px; color: #e57373;
+      margin-top: 2px;
     }
 
-    .about {
-      padding: 70px 22px 60px;
-      text-align: center;
+    /* ── Ikonka folderu w panelu pobierania ── */
+    .dl-folder-btn {
+      width: 26px; height: 26px; border: none; background: transparent;
+      color: var(--text-dim); border-radius: 6px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .12s, color .12s;
     }
-    .about-title { font-size: clamp(34px, 10vw, 54px); }
-    .about-text { font-size: 14px; }
+    .dl-folder-btn:hover { background: var(--hover); color: var(--accent); }
+    .dl-folder-btn svg { width: 14px; height: 14px; pointer-events: none; }
 
-    .alpha-section {
-      padding: 0 18px 80px;
+    /* ── Plik usunięty/przeniesiony ── */
+    .dl-history-item.missing { opacity: .55; }
+    .dl-history-item.missing .dl-history-name { text-decoration: line-through; }
+    .dl-missing-badge {
+      font-size: 11px; color: #e57373;
+      margin-top: 2px;
     }
-    .alpha-box {
-      padding: 32px 20px;
-      text-align: center;
-    }
-    .alpha-box h3 { font-size: clamp(28px, 8vw, 44px); }
-    .alpha-box p { font-size: 13px; }
-
-    footer {
-      padding: 28px 18px;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 14px;
-    }
-    .footer-logo { font-size: 20px; }
-    .footer-copy { font-size: 11px; text-align: center; }
-    .footer-contact { font-size: 11px; padding-top: 14px; }
-  }
-</style>
+  </style>
 </head>
 <body>
+<div id="app">
 
-<div class="cursor" id="cursor"></div>
-<div class="cursor-ring" id="cursorRing"></div>
-
-<!-- INTRO -->
-<div id="intro">
-  <div class="rocket-wrap">
-    <span class="rocket">🚀</span>
-    <div class="exhaust">
-      <div class="exhaust-flame f1"></div>
-      <div class="exhaust-flame f2"></div>
-      <div class="exhaust-flame f3"></div>
+  <!-- Titlebar -->
+  <div id="titlebar">
+    <div id="tabs-bar">
+      <button id="tab-new-btn" title="Nowa karta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="win-btns">
+      <button class="win-btn" id="btn-min" title="Minimalizuj">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="2" y1="7" x2="12" y2="7"/></svg>
+      </button>
+      <button class="win-btn" id="btn-max" title="Maksymalizuj">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="10" height="10" rx="1.5"/></svg>
+      </button>
+      <button class="win-btn close" id="btn-close" title="Zamknij">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
     </div>
   </div>
-  <div class="intro-title">NITRIX</div>
+
+  <!-- Navbar -->
+  <div id="navbar">
+    <button class="nav-btn" id="btn-back" disabled title="Wstecz">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-forward" disabled title="Do przodu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-reload" title="Odśwież">
+      <svg id="icon-reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+    </button>
+    <button class="nav-btn" id="btn-home" title="Strona główna">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+
+    <div id="url-wrap">
+      <span id="url-icon" title="Informacje o połączeniu">
+        <!-- ikona kłódki HTTPS -->
+        <svg id="icon-secure" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <!-- ikona ostrzeżenia HTTP — domyślnie ukryta -->
+        <svg id="icon-insecure" viewBox="0 0 24 24" fill="none" stroke="#fbbc04" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </span>
+      <input id="url-input" type="text" placeholder="Wpisz adres lub wyszukaj w Google..." spellcheck="false"/>
+    </div>
+
+    <!-- NOWE: przycisk pobierania — pojawia się animacją gdy coś się pobiera -->
+    <button id="dl-toggle-btn" title="Pobieranie">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span class="dl-badge"></span>
+    </button>
+
+    <button id="menu-btn" title="Menu">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- NOWE: Panel pobierania -->
+  <div id="dl-panel">
+    <div class="dl-panel-header">
+      <span class="dl-panel-title">Pobieranie</span>
+      <button id="dl-clear-btn">Wyczyść ukończone</button>
+    </div>
+    <!-- wpisy tworzone dynamicznie -->
+  </div>
+
+  <!-- Dropdown -->
+  <div id="dropdown">
+    <button class="dd-btn" id="dd-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      Historia
+    </button>
+    <button class="dd-btn" id="dd-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      Ustawienia
+    </button>
+  </div>
+
+  <!-- Panel ustawień -->
+  <div id="settings-overlay">
+    <div id="settings-panel">
+      <div id="settings-sidebar">
+        <div class="settings-title">Ustawienia</div>
+        <div class="sidebar-item active" data-section="wyglad">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          Wygląd
+        </div>
+      </div>
+      <div id="settings-content">
+        <div class="settings-section active" id="section-wyglad">
+          <div class="settings-top">
+            <div class="section-heading">Wygląd</div>
+            <button class="icon-btn" id="settings-close" title="Zamknij">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label">Motyw</div>
+            <div class="setting-desc">Zmienia wygląd paska nawigacji i interfejsu przeglądarki</div>
+          </div>
+          <div class="theme-options">
+            <div class="theme-wrap selected" id="wrap-dark" data-theme="dark">
+              <div class="theme-card dark-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                </div>
+              </div>
+              <div class="theme-card-label">Ciemny</div>
+            </div>
+            <div class="theme-wrap" id="wrap-light" data-theme="light">
+              <div class="theme-card light-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                </div>
+              </div>
+              <div class="theme-card-label">Jasny</div>
+            </div>
+          </div>
+
+          <!-- Opcja: Rozszerzaj pasek wyszukiwania -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label">Rozszerzaj pasek wyszukiwania</div>
+              <div class="setting-desc">Pasek URL zajmuje całą dostępną szerokość paska nawigacji</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-expand-bar" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel historii -->
+  <div id="history-overlay">
+    <div id="history-panel">
+      <!-- Sidebar -->
+      <div id="history-sidebar">
+        <div class="history-sidebar-title">Historia</div>
+        <div class="history-sidebar-item active" data-hsection="browsing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Historia przeglądania
+        </div>
+        <div class="history-sidebar-item" data-hsection="downloads">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Historia pobierania
+        </div>
+      </div>
+      <!-- Main content -->
+      <div id="history-main">
+        <!-- Historia przeglądania -->
+        <div id="history-section-browsing" class="history-section active">
+          <div id="history-header">
+            <h2>Historia przeglądania</h2>
+            <div id="history-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="history-search" type="text" placeholder="Szukaj w historii..."/>
+            </div>
+            <button id="history-clear-btn" title="Wyczyść całą historię">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+              Wyczyść wszystko
+            </button>
+            <button id="history-close-btn" title="Zamknij">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div id="history-list">
+            <div id="history-empty" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              Brak historii
+            </div>
+          </div>
+        </div>
+        <!-- Historia pobierania -->
+        <div id="history-section-downloads" class="history-section">
+          <div id="dl-history-header">
+            <h2>Historia pobierania</h2>
+            <div id="dl-history-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="dl-history-search" type="text" placeholder="Szukaj w pobranych..."/>
+            </div>
+            <button id="dl-history-clear-btn" title="Wyczyść historię pobierania">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+              Wyczyść wszystko
+            </button>
+            <button id="dl-history-close-btn" title="Zamknij">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div id="dl-history-list">
+            <div id="dl-history-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Brak pobranych plików
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pasek zakładek -->
+  <div id="bookmarks-bar">
+    <button id="bk-add-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Dodaj zakładkę
+    </button>
+  </div>
+
+  <!-- Modal zakładki -->
+  <div id="bk-modal-overlay">
+    <div id="bk-modal">
+      <h3>Dodaj zakładkę</h3>
+      <div class="bk-field">
+        <label>Nazwa</label>
+        <input id="bk-name-input" type="text" placeholder="np. Google"/>
+      </div>
+      <div class="bk-field">
+        <label>Adres URL</label>
+        <input id="bk-url-input" type="text" placeholder="https://..."/>
+      </div>
+      <div class="bk-modal-btns">
+        <button class="btn-cancel" id="bk-cancel">Anuluj</button>
+        <button class="btn-save"   id="bk-save">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebView container -->
+  <div id="webview-container">
+    <div id="loader"></div>
+  </div>
+
+  <!-- Pasek aktualizacji -->
+  <div id="update-overlay">
+    <div id="update-card">
+      <div id="update-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div id="update-card-title">Dostępna jest nowsza wersja przeglądarki!</div>
+      <div id="update-card-sub" id="update-card-sub">Pobierz najnowszą wersję aby korzystać z najnowszych funkcji i poprawek.</div>
+      <div id="update-progress-wrap">
+        <div id="update-progress-bar"><div id="update-progress-fill"></div></div>
+        <div id="update-progress-label">0%</div>
+      </div>
+      <button id="update-btn-now">Pobierz teraz</button>
+    </div>
+    <button id="update-btn-later">Może później</button>
+  </div>
+
+  <!-- Popup bezpieczeństwa -->
+  <div id="sec-popup">
+    <div class="sec-header">
+      <svg id="sec-popup-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span class="sec-title" id="sec-popup-title">Połączenie jest bezpieczne</span>
+    </div>
+    <div class="sec-desc" id="sec-popup-desc">
+      Ta strona jest zabezpieczona protokołem HTTPS. Wysyłanie kart kredytowych i innych poufnych danych pozostaje prywatne.
+    </div>
+    <button class="sec-cert-btn" id="sec-cert-btn">
+      <span id="sec-cert-label">Certyfikat jest ważny</span>
+      <span class="sec-cert-status valid" id="sec-cert-status">✓</span>
+    </button>
+  </div>
+
+  <!-- Modal certyfikatu -->
+  <div id="cert-modal-overlay">
+    <div id="cert-modal">
+
+      <!-- Sidebar -->
+      <div id="cert-sidebar">
+        <div class="cert-sidebar-title">Certyfikat</div>
+        <div class="cert-sidebar-item active" data-certsection="ogolne">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+          </svg>
+          Ogólne
+        </div>
+        <div class="cert-sidebar-item" data-certsection="zaawansowane">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          Zaawansowane
+        </div>
+      </div>
+
+      <!-- Główna treść -->
+      <div id="cert-main">
+        <div class="cert-modal-header">
+          <div class="cert-modal-title" id="cert-modal-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+            </svg>
+            Certyfikat
+          </div>
+          <button class="icon-btn" id="cert-modal-close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sekcja: Ogólne -->
+        <div class="cert-section-wrap active" id="cert-section-ogolne">
+          <!-- wypełniane dynamicznie -->
+        </div>
+
+        <!-- Sekcja: Zaawansowane -->
+        <div class="cert-section-wrap" id="cert-section-zaawansowane">
+          <!-- wypełniane dynamicznie -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="ctx-backdrop"></div>
+  <div id="ctx-menu">
+    <!-- Tryb: webview -->
+    <div class="ctx-item ctx-mode-webview" data-action="refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      Odśwież
+    </div>
+    <!-- Tryb: zakładka -->
+    <div class="ctx-item ctx-mode-bookmark" data-action="bk-edit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      Edytuj zakładkę
+    </div>
+    <div class="ctx-separator ctx-mode-bookmark"></div>
+    <div class="ctx-item ctx-mode-bookmark ctx-item-danger" data-action="bk-delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+      Usuń zakładkę
+    </div>
+  </div>
+
 </div>
-
-<div id="stars"></div>
-<div id="speed-lines"></div>
-
-<nav>
-  <span class="logo" onclick="window.scrollTo({top:0,behavior:'smooth'})" style="cursor:none;">
-    <img src="https://files.catbox.moe/81r9mt.png" alt="Nitrix Logo" style="height:32px;width:32px;object-fit:contain;vertical-align:middle;margin-right:10px;">NIT<span>RIX</span>
-  </span>
-  <span class="alpha-badge">ALPHA v1.3.2</span>
-</nav>
-
-<main>
-  <section class="hero">
-    <div class="hero-glow"></div>
-    <div class="hero-tag">Nitro Browser</div>
-    <img src="https://files.catbox.moe/81r9mt.png" alt="Nitrix Logo" style="height:clamp(70px,12vw,120px);width:clamp(70px,12vw,120px);object-fit:contain;filter:drop-shadow(0 0 30px rgba(0,245,160,0.4));opacity:0;animation:fadeUp 0.7s ease 4.4s forwards;margin-bottom:8px;">
-    <h1 class="hero-title">NITRIX</h1>
-    <p class="hero-slogan">Przeglądarka, która <em>leci</em>.</p>
-    <div class="hero-actions">
-      <a href="https://github.com/TheNitrixBrowser/autoaktualizacjenitrix/releases/download/v1.3.2/Nitrix-Setup-1.3.2.exe" class="btn-primary">Pobierz teraz</a>
-      <button class="btn-ghost" onclick="document.getElementById('about').scrollIntoView({behavior:'smooth'})">Czym jest Nitrix?</button>
-    </div>
-    <div class="alpha-warning">
-      <div class="alpha-dot"></div>
-      Wersja Alpha — to wczesny etap, mogą występować błędy.
-    </div>
-    <div class="scroll-hint">
-      <span>Scroll</span>
-      <div class="scroll-bar"></div>
-    </div>
-  </section>
-
-  <section class="about" id="about">
-    <div class="section-label reveal">// O projekcie</div>
-    <h2 class="about-title reveal">Co to jest<br>Nitrix?</h2>
-    <p class="about-text reveal">
-      Nitrix to <em>nowy projekt przeglądarki</em> — wciąż we wczesnej fazie rozwoju.
-      Chcę stworzyć szybkie, lekkie i przyjemne narzędzie do codziennego przeglądania internetu.
-      Jestem dopiero na początku drogi, ale już teraz możesz sprawdzić co mam.
-    </p>
-  </section>
-
-  <section class="alpha-section">
-    <div class="alpha-box reveal">
-      <span class="big-badge">⚠ WERSJA ALPHA</span>
-      <h3>W trakcie budowania</h3>
-      <p>
-        Nitrix jest aktywnie rozwijany. W tej wersji mogą pojawiać się błędy i brakujące funkcje.
-        Cenię każdy feedback — razem tworzymy coś fajnego.
-      </p>
-    </div>
-  </section>
-</main>
-
-<footer>
-  <div class="footer-logo">NITRIX</div>
-  <div class="footer-copy">© 2026 Nitrix. Projekt w trakcie rozwoju.</div>
-  <div class="footer-alpha">ALPHA — wczesny dostęp</div>
-  <div class="footer-contact">
-    Aby się ze mną skontaktować, napisz na: <a href="mailto:thenitrixbrowser@gmail.com">thenitrixbrowser@gmail.com</a>
-  </div>
-</footer>
-
 <script>
-  // CURSOR
-  const cursor = document.getElementById('cursor');
-  const ring   = document.getElementById('cursorRing');
-  let mx=0,my=0,rx=0,ry=0;
-  document.addEventListener('mousemove',e=>{ mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
-  (function animRing(){ rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); })();
-  document.querySelectorAll('a,button').forEach(el=>{
-    el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2.5)'; ring.style.width='50px'; ring.style.height='50px'; });
-    el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; ring.style.width='32px'; ring.style.height='32px'; });
-  });
+  // ══════════════════════════════════════════════════════════════════
+  //  ZMIENNE GLOBALNE
+  // ══════════════════════════════════════════════════════════════════
+  const tabsBar    = document.getElementById('tabs-bar')
+  const tabNewBtn  = document.getElementById('tab-new-btn')
+  const wvCont     = document.getElementById('webview-container')
+  const loader     = document.getElementById('loader')
+  const urlInput   = document.getElementById('url-input')
+  const urlWrap    = document.getElementById('url-wrap')
+  const btnBack    = document.getElementById('btn-back')
+  const btnFwd     = document.getElementById('btn-forward')
+  const btnReload  = document.getElementById('btn-reload')
+  const btnHome    = document.getElementById('btn-home')
+  const menuBtn    = document.getElementById('menu-btn')
+  const dropdown   = document.getElementById('dropdown')
+  const urlIcon    = document.getElementById('url-icon')
+  const settingsOverlay = document.getElementById('settings-overlay')
+  const iconReload = document.getElementById('icon-reload')
 
-  // STARS
-  const starsEl = document.getElementById('stars');
-  for(let i=0;i<100;i++){
-    const s=document.createElement('div'); s.className='star';
-    const size=Math.random()*2+0.4;
-    s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--o1:${(Math.random()*0.25+0.04).toFixed(2)};--o2:${(Math.random()*0.5+0.1).toFixed(2)};--d:${(Math.random()*3+1.5).toFixed(1)}s;--dl:${(Math.random()*4).toFixed(1)}s;`;
-    starsEl.appendChild(s);
+  let tabs = []
+  let activeTabId = null
+  let tabCounter = 0
+
+  function getActiveTab() { return tabs.find(t => t.id === activeTabId) }
+  function getDomain(url) { try { return new URL(url).hostname } catch { return '' } }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  POBIERANIE — logika UI
+  // ══════════════════════════════════════════════════════════════════
+  const dlToggleBtn = document.getElementById('dl-toggle-btn')
+  const dlPanel     = document.getElementById('dl-panel')
+  const dlClearBtn  = document.getElementById('dl-clear-btn')
+
+  // Mapa: id -> { el, barEl, metaEl, iconEl, state }
+  const dlItems = new Map()
+  const dlSpeeds = new Map()
+  let activeDownloadsCount = 0
+
+  // ══════════════════════════════════════════════════════════════════
+  //  HISTORIA POBIERANIA — persystencja
+  // ══════════════════════════════════════════════════════════════════
+  const DL_HISTORY_KEY = 'nitrix_dl_history'
+  let dlHistoryData = []
+
+  function loadDlHistory() {
+    try {
+      const raw = localStorage.getItem(DL_HISTORY_KEY)
+      dlHistoryData = raw ? JSON.parse(raw) : []
+    } catch(e) { dlHistoryData = [] }
   }
 
-  // SPEED LINES
-  const linesEl = document.getElementById('speed-lines');
-  for(let i=0;i<16;i++){
-    const l=document.createElement('div'); l.className='speed-line';
-    l.style.cssText=`--sd:${(Math.random()*5+3).toFixed(1)}s;--sdl:-${(Math.random()*7).toFixed(1)}s;--st:${Math.random()*100}%;--sw:${(Math.random()*180+60)}px;`;
-    linesEl.appendChild(l);
+  function saveDlHistory() {
+    try { localStorage.setItem(DL_HISTORY_KEY, JSON.stringify(dlHistoryData)) } catch(e) {}
   }
 
-  // SCROLL REVEAL
-  const obs=new IntersectionObserver(entries=>{
-    entries.forEach((e,i)=>{ if(e.isIntersecting){ setTimeout(()=>e.target.classList.add('visible'),i*100); obs.unobserve(e.target); } });
-  },{threshold:0.15});
-  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  function addDlHistoryEntry(entry) {
+    dlHistoryData.unshift(entry)
+    if (dlHistoryData.length > 2000) dlHistoryData.splice(2000)
+    saveDlHistory()
+  }
+
+  loadDlHistory()
+
+  // Sprawdza czy plik na dysku to ten sam oryginał (nie nowo pobrany)
+  // Zwraca: 'original' | 'replaced' | 'missing'
+  async function checkFileIdentity(savePath, downloadTimestamp) {
+    try {
+      const { exists, mtimeMs } = await window.electronAPI.fileExists(savePath)
+      if (!exists) return 'missing'
+      // Margines 30s — plik mógł być zapisany chwilę po zakończeniu pobierania
+      // Jeśli mtime jest znacznie nowszy niż timestamp pobierania — to inny plik
+      if (mtimeMs > downloadTimestamp + 30000) return 'replaced'
+      return 'original'
+    } catch { return 'missing' }
+  }
+
+  function formatBytes(bytes) {
+    if (bytes === 0 || bytes == null) return '0 B'
+    const units = ['B','KB','MB','GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(1024))
+    return (bytes / Math.pow(1024, i)).toFixed(i > 0 ? 1 : 0) + ' ' + units[Math.min(i, 3)]
+  }
+
+  function formatSpeed(bytesPerSec) {
+    return formatBytes(bytesPerSec) + '/s'
+  }
+
+  function formatEta(remainingBytes, speed) {
+    if (!speed || speed < 1 || remainingBytes <= 0) return ''
+    const secs = remainingBytes / speed
+    if (secs < 60)  return `~${Math.ceil(secs)}s`
+    if (secs < 3600) return `~${Math.ceil(secs/60)}min`
+    return `~${(secs/3600).toFixed(1)}h`
+  }
+
+  // Pokaż/ukryj ikonkę pobierania obok 3 kropek z animacją zwężania URL
+  function updateDlButtonVisibility() {
+    const hasAny = dlItems.size > 0
+    if (hasAny) {
+      dlToggleBtn.classList.add('visible')
+      if (expandBarEnabled) urlWrap.classList.add('downloading')
+    } else {
+      dlToggleBtn.classList.remove('visible')
+      urlWrap.classList.remove('downloading')
+      dlPanel.classList.remove('open')
+    }
+    // Niebieski badge gdy coś w toku
+    dlToggleBtn.classList.toggle('active', activeDownloadsCount > 0)
+  }
+
+  // Ikona SVG zależna od stanu
+  function getDlIcon(state) {
+    if (state === 'completed') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>`
+    }
+    if (state === 'error') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>`
+    }
+    // w toku
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>`
+  }
+
+  window.electronAPI.onDownloadStarted(data => {
+    const { id, filename, totalBytes } = data
+    dlSpeeds.set(id, { bytes: 0, time: Date.now(), speed: 0 })
+    activeDownloadsCount++
+
+    // Utwórz element wpisu
+    const item = document.createElement('div')
+    item.className = 'dl-item'
+    item.innerHTML = `
+      <div class="dl-item-top">
+        <div class="dl-item-icon" id="dl-icon-${id}">${getDlIcon('progressing')}</div>
+        <div class="dl-item-info">
+          <div class="dl-item-name" title="${filename}">${filename}</div>
+          <div class="dl-item-meta" id="dl-meta-${id}">Rozpoczynanie…</div>
+        </div>
+        <button class="dl-item-folder-btn" id="dl-folder-${id}" title="Pokaż w folderze" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+      </div>
+      <div class="dl-progress-bar-wrap">
+        <div class="dl-progress-bar ${totalBytes <= 0 ? 'indeterminate' : ''}" id="dl-bar-${id}"></div>
+      </div>
+    `
+
+    // Wstaw za nagłówkiem panelu
+    const header = dlPanel.querySelector('.dl-panel-header')
+    dlPanel.insertBefore(item, header.nextSibling)
+
+    dlItems.set(id, {
+      el:          item,
+      barEl:       item.querySelector(`#dl-bar-${id}`),
+      metaEl:      item.querySelector(`#dl-meta-${id}`),
+      iconEl:      item.querySelector(`#dl-icon-${id}`),
+      folderBtnEl: item.querySelector(`#dl-folder-${id}`),
+      state:       'progressing',
+      filename:    filename,
+      totalBytes:  totalBytes,
+      timestamp:   Date.now(),
+    })
+
+    updateDlButtonVisibility()
+    // Otwórz panel automatycznie przy pierwszym pobraniu
+    dlPanel.classList.add('open')
+  })
+
+  window.electronAPI.onDownloadProgress(data => {
+    const { id, receivedBytes, totalBytes } = data
+    const now = Date.now()
+    const prev = dlSpeeds.get(id)
+    let speed = 0
+    if (prev && (now - prev.time) > 50) {
+  speed = Math.max(0, (receivedBytes - prev.bytes) / ((now - prev.time) / 1000))
+  dlSpeeds.set(id, { bytes: receivedBytes, time: now, speed })
+} else if (prev) {
+  speed = prev.speed
+} else {
+  dlSpeeds.set(id, { bytes: receivedBytes, time: now, speed: 0 })
+}
+    const entry = dlItems.get(id)
+    if (!entry) return
+
+    const bar  = entry.barEl
+    const meta = entry.metaEl
+
+    if (totalBytes > 0) {
+      const pct = Math.min(100, (receivedBytes / totalBytes) * 100)
+      bar.classList.remove('indeterminate')
+      bar.style.width = pct + '%'
+      const remaining = totalBytes - receivedBytes
+      const eta = formatEta(remaining, speed)
+      meta.textContent = `${formatBytes(receivedBytes)} / ${formatBytes(totalBytes)}  ·  ${formatSpeed(speed)}${eta ? '  ·  ' + eta : ''}`
+    } else {
+      // Nieznany rozmiar
+      if (!bar.classList.contains('indeterminate')) bar.classList.add('indeterminate')
+      meta.textContent = `${formatBytes(receivedBytes)}  ·  ${formatSpeed(speed)}`
+    }
+  })
+
+  window.electronAPI.onDownloadDone(data => {
+    const { id, filename, state, totalBytes } = data
+    dlSpeeds.delete(id)
+    const entry = dlItems.get(id)
+    activeDownloadsCount = Math.max(0, activeDownloadsCount - 1)
+    updateDlButtonVisibility()
+    if (!entry) return
+
+    entry.state    = state
+    entry.savePath = data.savePath   // ← zapamiętaj ścieżkę
+    const bar       = entry.barEl
+    const meta      = entry.metaEl
+    const icon      = entry.iconEl
+    const folderBtn = entry.folderBtnEl
+
+    bar.classList.remove('indeterminate')
+
+    if (state === 'completed') {
+      bar.style.width = '100%'
+      bar.classList.add('done')
+      icon.classList.add('done')
+      icon.innerHTML = getDlIcon('completed')
+      meta.textContent = `Ukończono  ·  ${formatBytes(totalBytes)}`
+
+      const downloadedAt = entry.timestamp || Date.now()
+
+      // Sprawdza czy plik istnieje na dysku
+      async function checkFile() {
+        try { return (await window.electronAPI.fileExists(entry.savePath)).exists } catch { return false }
+      }
+
+      function markFileMissing() {
+        if (entry._fileMissing) return
+        entry._fileMissing = true
+        entry.el.style.cursor = 'default'
+        entry.el.title = 'Plik usunięty lub przeniesiony'
+        bar.parentElement.style.display = 'none'
+        icon.className = 'dl-item-icon error'
+        icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`
+        const nameEl = entry.el.querySelector('.dl-item-name')
+        if (nameEl) nameEl.style.textDecoration = 'line-through'
+        meta.textContent = 'Plik usunięty lub przeniesiony'
+        meta.style.color = '#e57373'
+        if (folderBtn) folderBtn.style.display = 'none'
+      }
+
+      function markFileRestored() {
+        if (!entry._fileMissing) return
+        entry._fileMissing = false
+        entry.el.style.cursor = 'pointer'
+        entry.el.title = 'Kliknij aby otworzyć plik'
+        bar.parentElement.style.display = ''
+        icon.className = 'dl-item-icon done'
+        icon.innerHTML = getDlIcon('completed')
+        const nameEl = entry.el.querySelector('.dl-item-name')
+        if (nameEl) nameEl.style.textDecoration = ''
+        meta.textContent = `Ukończono  ·  ${formatBytes(totalBytes)}`
+        meta.style.color = ''
+        if (folderBtn) folderBtn.style.display = ''
+      }
+
+      entry._markMissing  = markFileMissing
+      entry._markRestored = markFileRestored
+
+      // Sprawdź po 1.5s — plik musi mieć czas żeby wylądować na dysku
+      setTimeout(() => {
+        checkFile().then(exists => {
+          if (!exists) { markFileMissing(); return }
+
+          entry.el.style.cursor = 'pointer'
+          entry.el.title = 'Kliknij aby otworzyć plik'
+          entry.el.addEventListener('click', async e => {
+            if (e.target.closest('.dl-item-folder-btn')) return
+            const ok = await checkFile()
+            if (!ok) { markFileMissing(); return }
+            window.electronAPI.openFile(entry.savePath)
+          })
+
+          if (folderBtn) {
+            folderBtn.style.display = ''
+            folderBtn.addEventListener('click', async e => {
+              e.stopPropagation()
+              const ok = await checkFile()
+              if (!ok) { markFileMissing(); return }
+              window.electronAPI.showInFolder(entry.savePath)
+            })
+          }
+        }).catch(() => {})
+      }, 1500)
+
+
+      // Zapisz do historii pobierania
+      addDlHistoryEntry({
+        filename:  filename,
+        savePath:  data.savePath,
+        totalBytes: totalBytes,
+        state:     state,
+        timestamp: entry.timestamp || Date.now(),
+      })
+      // Jeśli panel historii pobierania jest otwarty — odśwież
+      if (historyOverlay && historyOverlay.classList.contains('open')) {
+        renderDlHistory(document.getElementById('dl-history-search').value)
+      }
+    } else {
+      bar.classList.add('error')
+      icon.classList.add('error')
+      icon.innerHTML = getDlIcon('error')
+      meta.textContent = state === 'cancelled' ? 'Anulowano' : 'Błąd pobierania'
+
+      // Zapisz błędy też do historii
+      addDlHistoryEntry({
+        filename:  filename,
+        savePath:  data.savePath || '',
+        totalBytes: totalBytes,
+        state:     state,
+        timestamp: entry.timestamp || Date.now(),
+      })
+      if (historyOverlay && historyOverlay.classList.contains('open')) {
+        renderDlHistory(document.getElementById('dl-history-search').value)
+      }
+    }
+  })
+
+  // Przycisk — otwórz/zamknij panel pobierania
+  dlToggleBtn.addEventListener('click', e => {
+    e.stopPropagation()
+    hideSecPopup()
+    dropdown.classList.remove('open')
+    dlPanel.classList.toggle('open')
+    // Przy każdym otwarciu sprawdź czy pliki istnieją (w obie strony)
+    if (dlPanel.classList.contains('open')) {
+      for (const [id, entry] of dlItems.entries()) {
+        if (entry.state === 'completed' && entry.savePath) {
+          window.electronAPI.fileExists(entry.savePath).then(({ exists }) => {
+            if (!exists && !entry._fileMissing) entry._markMissing  && entry._markMissing()
+            if (exists  &&  entry._fileMissing) entry._markRestored && entry._markRestored()
+          }).catch(() => {})
+        }
+      }
+    }
+  })
+
+  // Wyczyść ukończone
+  dlClearBtn.addEventListener('click', () => {
+    for (const [id, entry] of [...dlItems.entries()]) {
+      if (entry.state !== 'progressing') {
+        entry.el.remove()
+        dlItems.delete(id)
+      }
+    }
+    updateDlButtonVisibility()
+  })
+
+  // Zamknij panel po kliknięciu poza nim
+  // Forward-safe — pełna implementacja poniżej przy inicjalizacji sec-popup
+  function hideSecPopup() {
+    const p = document.getElementById('sec-popup')
+    if (p) p.classList.remove('open')
+  }
+
+  function closeAllMenus() {
+    dropdown.classList.remove('open')
+    dlPanel.classList.remove('open')
+    hideCtxMenu()
+    hideSecPopup()
+  }
+
+  function closeTransientMenus() {
+    dropdown.classList.remove('open')
+    dlPanel.classList.remove('open')
+    hideCtxMenu()
+    hideSecPopup()
+  }
+
+  document.addEventListener('click', () => closeAllMenus())
+  dlPanel.addEventListener('click', e => e.stopPropagation())
+  dropdown.addEventListener('click', e => e.stopPropagation())
+
+  // Zamknij ctx-menu przy mousedown w fazie capture — działa nawet gdy
+  // kliknięty element wywołuje e.stopPropagation() (np. menuBtn, dlToggleBtn)
+  document.addEventListener('mousedown', e => {
+    if (!ctxMenu.contains(e.target)) hideCtxMenu()
+  }, { capture: true })
+
+  // ══════════════════════════════════════════════════════════════════
+  //  TWORZENIE KARTY
+  // ══════════════════════════════════════════════════════════════════
+  function createTab(url = 'https://www.google.pl') {
+    const id = ++tabCounter
+
+    const tabEl = document.createElement('div')
+    tabEl.className = 'tab'
+    tabEl.dataset.id = id
+
+    const faviconEl = document.createElement('img')
+    faviconEl.className = 'tab-favicon'
+    faviconEl.src = `https://www.google.com/s2/favicons?domain=${getDomain(url)}&sz=32`
+    faviconEl.onerror = () => { faviconEl.style.display = 'none' } // zastępowane przez faviconGen przy nawigacji
+
+    const titleEl = document.createElement('span')
+    titleEl.className = 'tab-title'
+    titleEl.textContent = 'Nowa karta'
+
+    const closeBtn = document.createElement('button')
+    closeBtn.className = 'tab-close'
+    closeBtn.innerHTML = `<svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="1.5" y1="1.5" x2="8.5" y2="8.5"/><line x1="8.5" y1="1.5" x2="1.5" y2="8.5"/></svg>`
+    closeBtn.title = 'Zamknij kartę'
+    closeBtn.addEventListener('click', e => { e.stopPropagation(); closeTab(id) })
+
+    tabEl.append(faviconEl, titleEl, closeBtn)
+    tabEl.addEventListener('click', () => activateTab(id))
+
+    // ── Tooltip po 5s hover ───────────────────────────────────────
+    let tooltipTimer = null
+    let tooltipEl = null
+    let tabHovered = false   // czy mysz aktualnie jest nad kartą
+
+    function showTabTooltip() {
+      if (tooltipEl) return
+      const tab = tabs.find(t => t.id === id)
+      const rect = tabEl.getBoundingClientRect()
+
+      tooltipEl = document.createElement('div')
+      tooltipEl.className = 'tab-tooltip'
+
+      const title = titleEl.textContent || 'Karta'
+      let domain = ''
+      try { domain = new URL(tab?.url || '').hostname } catch {}
+
+      const faviconSrc = faviconEl.style.display !== 'none' ? faviconEl.src : ''
+      const faviconHtml = faviconSrc
+        ? `<img src="${faviconSrc}" style="width:15px;height:15px;border-radius:3px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`
+        : ''
+      const domainLine = domain
+        ? `<div class="tab-tooltip-domain" style="display:flex;align-items:center;gap:7px">${faviconHtml}<span>${domain}</span></div>`
+        : ''
+
+      tooltipEl.innerHTML = `
+        <div class="tab-tooltip-title">${title}</div>
+        ${domainLine}
+        <div class="tab-tooltip-divider"></div>
+        <div class="tab-tooltip-ram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2"/>
+            <path d="M6 6V4M10 6V4M14 6V4M18 6V4M6 18v2M10 18v2M14 18v2M18 18v2"/>
+          </svg>
+          <span class="tab-tooltip-ram-label">Zużycie RAM:</span>
+          <span class="tab-tooltip-ram-value" id="tt-ram-${id}">…</span>
+        </div>
+      `
+      document.body.appendChild(tooltipEl)
+
+      const left = Math.min(rect.left, window.innerWidth - 370)
+      tooltipEl.style.left = left + 'px'
+      tooltipEl.style.top  = (rect.bottom + 4) + 'px'
+
+      requestAnimationFrame(() => tooltipEl?.classList.add('visible'))
+
+      const wcId = wv.getWebContentsId ? wv.getWebContentsId() : null
+      window.electronAPI.getRamUsage(wcId).then(r => {
+        const el = document.getElementById(`tt-ram-${id}`)
+        if (el) el.textContent = r?.mb != null ? `${r.mb} MB` : 'brak danych'
+      }).catch(() => {
+        const el = document.getElementById(`tt-ram-${id}`)
+        if (el) el.textContent = 'brak danych'
+      })
+    }
+
+    function hideTabTooltip() {
+      clearTimeout(tooltipTimer)
+      tooltipTimer = null
+      tabHovered = false
+      if (tooltipEl) {
+        tooltipEl.remove()
+        tooltipEl = null
+      }
+    }
+
+    // Ukryj tooltip przy przeładowaniu — wznów timer TYLKO jeśli mysz nadal nad kartą
+    function resetTooltipOnNavigation() {
+      clearTimeout(tooltipTimer)
+      tooltipTimer = null
+      if (tooltipEl) {
+        tooltipEl.remove()
+        tooltipEl = null
+      }
+      if (tabHovered) {
+        tooltipTimer = setTimeout(showTabTooltip, 3000)
+      }
+    }
+
+    tabEl.addEventListener('mouseenter', () => {
+      tabHovered = true
+      tooltipTimer = setTimeout(showTabTooltip, 3000)
+    })
+    tabEl.addEventListener('mouseleave', hideTabTooltip)
+    tabEl.addEventListener('mousedown',  hideTabTooltip)
+
+    let _suppressClick = false
+    tabEl.addEventListener('click', e => {
+      if (_suppressClick) { _suppressClick = false; e.stopImmediatePropagation() }
+    }, true)
+
+    tabEl.addEventListener('mousedown', e => {
+      if (e.button !== 0) return
+      if (e.target.closest('.tab-close')) return
+      e.preventDefault()
+
+      const startX  = e.clientX
+      let dragging  = false
+      let fromIdx   = tabs.findIndex(t => t.id === id)
+      let insertIdx = fromIdx
+
+      // Zapamiętaj pozycje wszystkich kart PRZED przesuwaniem
+      let snapshots = []
+      const takeSnapshots = () => {
+        snapshots = tabs.map(t => {
+          const r = t.tabEl.getBoundingClientRect()
+          return { left: r.left, width: r.width, mid: r.left + r.width / 2 }
+        })
+      }
+      takeSnapshots()
+      const mySnap = snapshots[fromIdx]
+
+      const onMove = mv => {
+        const dx = mv.clientX - startX
+        if (!dragging && Math.abs(dx) > 4) {
+          dragging = true
+          hideTabTooltip()
+          tabEl.classList.add('tab-dragging')
+        }
+        if (!dragging) return
+        const barRect = tabsBar.getBoundingClientRect()
+        const minDx = barRect.left - mySnap.left
+        const maxDx = barRect.right - mySnap.left - mySnap.width
+        const clampedDx = Math.min(maxDx, Math.max(minDx, dx))
+        tabEl.style.transform = `translateX(${clampedDx}px)`
+        const dragCx = mySnap.mid + clampedDx
+
+        // Popychaj przycisk + gdy karta go dotyka
+        const tabRight = mySnap.left + mySnap.width + clampedDx
+        const newTabOrigLeft = tabsBar.getBoundingClientRect().left + tabNewBtn.offsetLeft
+        const overlap = tabRight - newTabOrigLeft + 8
+        tabNewBtn.style.transition = 'none'
+        tabNewBtn.style.transform = overlap > 0 ? `translateX(${overlap}px)` : ''
+
+        // Oblicz nowy indeks docelowy
+        let newIdx = fromIdx
+        if (dx < 0) {
+          for (let i = fromIdx - 1; i >= 0; i--) {
+            if (dragCx < snapshots[i].mid) newIdx = i
+          }
+        } else {
+          for (let i = fromIdx + 1; i < snapshots.length; i++) {
+            if (dragCx > snapshots[i].mid) newIdx = i
+          }
+        }
+        insertIdx = newIdx
+
+        // Przesuń inne karty płynnie
+        tabs.forEach((t, i) => {
+          if (t.id === id) return
+          t.tabEl.style.transition = 'transform .18s cubic-bezier(.4,0,.2,1)'
+          if (fromIdx < newIdx && i > fromIdx && i <= newIdx) {
+            t.tabEl.style.transform = `translateX(-${mySnap.width}px)`
+          } else if (fromIdx > newIdx && i >= newIdx && i < fromIdx) {
+            t.tabEl.style.transform = `translateX(${mySnap.width}px)`
+          } else {
+            t.tabEl.style.transform = ''
+          }
+        })
+      }
+
+      const onUp = () => {
+        document.removeEventListener('mousemove', onMove)
+        document.removeEventListener('mouseup', onUp)
+        if (!dragging) return
+        _suppressClick = true
+        tabEl.classList.remove('tab-dragging')
+        hideTabTooltip()
+
+        const commit = () => {
+          tabs.forEach(t => { t.tabEl.style.transition = ''; t.tabEl.style.transform = '' })
+         tabNewBtn.style.transition = 'transform .2s cubic-bezier(.4,0,.2,1)'
+         setTimeout(() => { tabNewBtn.style.transform = '' }, 10)
+          if (insertIdx !== fromIdx) {
+            const [moved] = tabs.splice(fromIdx, 1)
+            tabs.splice(insertIdx, 0, moved)
+            tabs.forEach(t => tabsBar.insertBefore(t.tabEl, tabNewBtn))
+          }
+        }
+
+        // Animacja snap do finalnej pozycji
+        let snapDx = 0
+        if (insertIdx !== fromIdx) {
+          snapDx = insertIdx > fromIdx
+            ? snapshots[insertIdx].left + snapshots[insertIdx].width - mySnap.left - mySnap.width
+            : snapshots[insertIdx].left - mySnap.left
+        }
+        tabEl.style.transition = 'transform .15s cubic-bezier(.4,0,.2,1)'
+        tabEl.style.transform  = `translateX(${snapDx}px)`
+        setTimeout(commit, 155)
+      }
+
+      document.addEventListener('mousemove', onMove)
+      document.addEventListener('mouseup', onUp)
+    })
+
+    tabsBar.insertBefore(tabEl, tabNewBtn)
+    tabEl.classList.add('tab-opening')
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      tabEl.classList.remove('tab-opening')
+      tabEl.style.transition = 'max-width .22s cubic-bezier(.4,0,.2,1), min-width .22s cubic-bezier(.4,0,.2,1), opacity .18s ease, padding .22s cubic-bezier(.4,0,.2,1)'
+      tabEl.style.maxWidth = '240px'
+      tabEl.style.minWidth = '120px'
+      tabEl.style.opacity  = '1'
+      tabEl.style.padding  = ''
+    }))
+    setTimeout(() => {
+      tabEl.style.transition = ''
+      tabEl.style.maxWidth   = ''
+      tabEl.style.minWidth   = ''
+      tabEl.style.opacity    = ''
+    }, 230)
+
+    const wv = document.createElement('webview')
+    wv.src = url
+    wv.setAttribute('allowpopups', '')
+    wv.setAttribute('partition', 'persist:main')
+    wv.setAttribute('webpreferences', 'allowRunningInsecureContent=false, javascript=yes, images=yes, pageCache=yes')
+    wv.style.cssText = 'display:none;width:100%;flex:1;min-height:0;'
+    wvCont.appendChild(wv)
+
+    // Przechwytuj otwieranie nowych okien — otwórz jako nową kartę
+    wv.addEventListener('new-window', e => {
+      e.preventDefault()
+      const targetUrl = e.url
+      if (!targetUrl || targetUrl === 'about:blank') return
+      createTab(targetUrl)
+    })
+
+    // Nowszy Electron używa will-navigate zamiast new-window dla niektórych przekierowań
+    wv.addEventListener('will-navigate', e => {
+      // will-navigate na samym webview to normalna nawigacja w tej karcie — nie blokuj
+    })
+
+    wv.addEventListener('context-menu', (e) => {
+      showCtxMenu(e.params.x, e.params.y)
+    })
+
+    wv.addEventListener('focus', () => closeTransientMenus())
+    // Zamknij ctx-menu gdy użytkownik kliknie w obszar webview
+    wv.addEventListener('mousedown', () => hideCtxMenu())
+    wv.addEventListener('did-start-loading', () => {
+      resetTooltipOnNavigation()
+      const tabObj = tabs.find(t => t.id === id)
+      if (tabObj) tabObj.isLoading = true
+      if (activeTabId !== id) return
+      loader.className = 'active'
+      iconReload.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+      btnReload.onclick = () => wv.stop()
+    })
+
+    const _finishLoading = () => {
+      const tabObj = tabs.find(t => t.id === id)
+      if (tabObj) tabObj.isLoading = false
+      if (activeTabId !== id) return
+      loader.className = 'done'
+      setTimeout(() => { if (loader.className === 'done') loader.className = '' }, 600)
+      iconReload.innerHTML = '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>'
+      btnReload.onclick = () => wv.reload()
+      btnBack.disabled = !wv.canGoBack()
+      btnFwd.disabled  = !wv.canGoForward()
+    }
+
+    wv.addEventListener('did-stop-loading', _finishLoading)
+    wv.addEventListener('did-finish-load',  _finishLoading)
+
+    // Licznik generacji — każda nawigacja inkrementuje, stare callbacki ignorowane
+    let faviconGen = 0
+
+    wv.addEventListener('did-navigate', e => {
+      const tab = tabs.find(t => t.id === id)
+      if (tab) {
+        tab.url = e.url
+        const gen = ++faviconGen
+        const googleUrl = `https://www.google.com/s2/favicons?domain=${getDomain(e.url)}&sz=32`
+        // Pokaż favicon z Google service jako bazowy fallback
+        faviconEl.style.display = ''
+        faviconEl.src = googleUrl
+        faviconEl.onerror = () => {
+          if (faviconGen !== gen) return // stara nawigacja — ignoruj
+          faviconEl.style.display = 'none'
+        }
+      }
+      if (activeTabId === id) {
+        setUrlDisplay(e.url)
+        setSecurityState(e.url)
+        btnBack.disabled = !wv.canGoBack()
+        btnFwd.disabled  = !wv.canGoForward()
+        if (isHomePage(e.url)) setTimeout(() => { urlInput.focus() }, 150)
+      }
+      scheduleAddToHistory(e.url, '')
+    })
+
+    wv.addEventListener('did-navigate-in-page', e => {
+      if (!e.isMainFrame) return
+      if (activeTabId === id) {
+        setUrlDisplay(e.url)
+        setSecurityState(e.url)
+        btnBack.disabled = !wv.canGoBack()
+        btnFwd.disabled  = !wv.canGoForward()
+      }
+      scheduleAddToHistory(e.url, '')
+    })
+
+    wv.addEventListener('page-title-updated', e => {
+      titleEl.textContent = e.title || 'Karta'
+      if (activeTabId === id) document.title = e.title + ' — Nitrix'
+      const tab = tabs.find(t => t.id === id)
+      if (tab && tab.url && e.title) scheduleAddToHistory(tab.url, e.title)
+    })
+
+    wv.addEventListener('page-favicon-updated', e => {
+      if (!e.favicons || e.favicons.length === 0) return
+      const gen = ++faviconGen   // nowa generacja — to jest "prawdziwe" favicon
+      const actualUrl = e.favicons[0]
+      const tab = tabs.find(t => t.id === id)
+      const fallbackUrl = tab?.url
+        ? `https://www.google.com/s2/favicons?domain=${getDomain(tab.url)}&sz=32`
+        : null
+
+      faviconEl.onerror = () => {
+        if (faviconGen !== gen) return
+        // Właściwe favicon nie załadowało się — cofnij do Google service
+        if (fallbackUrl) {
+          const gen2 = ++faviconGen
+          faviconEl.src = fallbackUrl
+          faviconEl.onerror = () => {
+            if (faviconGen !== gen2) return
+            faviconEl.style.display = 'none'
+          }
+          faviconEl.onload = () => { faviconEl.style.display = '' }
+        } else {
+          faviconEl.style.display = 'none'
+        }
+      }
+      faviconEl.onload = () => {
+        if (faviconGen !== gen) return
+        faviconEl.style.display = ''
+      }
+      faviconEl.src = actualUrl
+    })
+
+    const tabObj = { id, wv, tabEl, titleEl, faviconEl, url }
+    tabs.push(tabObj)
+    activateTab(id)
+    setTimeout(() => { if (typeof fixWebviewSizes === 'function') fixWebviewSizes() }, 80)
+    return tabObj
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  AKTYWACJA KARTY
+  // ══════════════════════════════════════════════════════════════════
+  function activateTab(id) {
+    const tab = tabs.find(t => t.id === id)
+    if (!tab) return
+    tabs.forEach(t => { t.wv.style.display = 'none'; t.tabEl.classList.remove('active') })
+    tab.wv.style.display = 'flex'
+    tab.tabEl.classList.add('active')
+    activeTabId = id
+    setUrlDisplay(tab.url || '')
+    try { btnBack.disabled = !tab.wv.canGoBack() } catch { btnBack.disabled = true }
+    try { btnFwd.disabled  = !tab.wv.canGoForward() } catch { btnFwd.disabled = true }
+    setSecurityState(tab.url || '')
+    document.title = (tab.titleEl.textContent || 'Nowa karta') + ' — Nitrix'
+    // Synchronizuj pasek ładowania ze stanem karty
+    if (tab.isLoading) {
+      loader.className = 'active'
+      iconReload.innerHTML = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+      btnReload.onclick = () => tab.wv.stop()
+    } else {
+      loader.className = ''
+      iconReload.innerHTML = '<polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>'
+      btnReload.onclick = () => tab.wv.reload()
+    }
+    // Auto-focus gdy strona startowa
+    if (isHomePage(tab.url)) {
+      setTimeout(() => { urlInput.focus() }, 80)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  WYŚWIETLANIE URL — skrócony / pełny bez protokołu / pełny
+  // ══════════════════════════════════════════════════════════════════
+  let urlClickCount = 0
+  let urlClickTimer = null
+
+  function isHomePage(url) {
+    if (!url) return true
+    try {
+      const u = new URL(url)
+      const googleHost = /^(www\.)?google\.(pl|com)$/.test(u.hostname)
+      if (!googleHost) return false
+      // Jeśli nie ma parametru q= (wyszukiwania) — to strona główna
+      return !u.searchParams.has('q')
+    } catch { return false }
+  }
+
+  function getShortUrl(url) {
+    if (!url) return ''
+    try {
+      const u = new URL(url)
+      const host = u.hostname.replace(/^www\./, '')
+      const path = u.pathname + u.search
+      if (path && path !== '/') {
+        const short = path.length > 40 ? path.slice(0, 40) + '…' : path
+        return host + short
+      }
+      return host
+    } catch { return url }
+  }
+
+  function getUrlWithoutProtocol(url) {
+    if (!url) return ''
+    return url.replace(/^https?:\/\//, '')
+  }
+
+  function setUrlDisplay(url) {
+    if (isHomePage(url)) {
+      urlInput.value = ''
+    } else {
+      urlInput.value = getShortUrl(url)
+    }
+    const tab = getActiveTab()
+    if (tab) tab.url = url
+  }
+
+  // Blur — wróć do skróconego, reset kliknięć
+  urlInput.addEventListener('blur', () => {
+    urlClickCount = 0
+    if (urlClickTimer) clearTimeout(urlClickTimer)
+    const tab = getActiveTab()
+    setUrlDisplay(tab ? tab.url : '')
+  })
+  function closeTab(id) {
+    const idx = tabs.findIndex(t => t.id === id)
+    if (idx === -1) return
+    const tab = tabs[idx]
+    hideSecPopup()
+    if (activeTabId === id) {
+      const newIdx = idx < tabs.length - 1 ? idx + 1 : idx - 1
+      if (newIdx >= 0) activateTab(tabs[newIdx].id)
+    }
+    // Zablokuj width żeby animacja miała od czego kurczyć
+    const w = tab.tabEl.getBoundingClientRect().width
+    tab.tabEl.style.maxWidth = w + 'px'
+    tab.tabEl.style.minWidth = w + 'px'
+    tab.tabEl.style.overflow = 'hidden'
+    tab.tabEl.style.pointerEvents = 'none'
+    // + button płynnie wraca
+    tabNewBtn.style.transition = 'transform .22s cubic-bezier(.4,0,.2,1)'
+    tabNewBtn.style.transform = ''
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      tab.tabEl.classList.add('tab-closing')
+    }))
+    setTimeout(() => {
+      tab.tabEl.remove()
+      tab.wv.remove()
+      tabs.splice(tabs.findIndex(t => t.id === id), 1)
+      if (tabs.length === 0) createTab('https://www.google.pl')
+    }, 230)
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  NAWIGACJA
+  // ══════════════════════════════════════════════════════════════════
+  function navigate(raw) {
+    const url = raw.trim()
+    if (!url) return
+    const tab = getActiveTab()
+    if (!tab) return
+    if (/^https?:\/\//i.test(url)) {
+      tab.wv.loadURL(url)
+    } else if (/^[a-z0-9.-]+\.[a-z]{2,}/i.test(url) && !url.includes(' ')) {
+      tab.wv.loadURL('https://' + url)
+    } else {
+      tab.wv.loadURL('https://www.google.com/search?q=' + encodeURIComponent(url))
+    }
+  }
+
+  urlInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      navigate(urlInput.value)
+      urlInput.blur()
+    }
+    if (e.key === 'Escape') urlInput.blur()
+  })
+
+  // Kliknięcie na pasek URL — 1 klik = bez protokołu, 2 kliki = pełny, potem już nie zmienia
+  urlInput.addEventListener('click', () => {
+    const tab = getActiveTab()
+    const fullUrl = tab ? tab.url : ''
+    if (isHomePage(fullUrl)) return
+    if (urlClickCount >= 2) return  // po 2 kliknięciach nie zmienia już nic
+    urlClickCount++
+    if (urlClickTimer) clearTimeout(urlClickTimer)
+    if (urlClickCount === 1) {
+      urlInput.value = getUrlWithoutProtocol(fullUrl)
+      urlInput.select()
+    } else {
+      urlInput.value = fullUrl
+      urlInput.select()
+    }
+    urlClickTimer = setTimeout(() => { urlClickCount = 0 }, 2000)
+  })
+
+  // Focus (np. Tab) — strona startowa: pustka; inne: bez protokołu
+  urlInput.addEventListener('focus', () => {
+    const tab = getActiveTab()
+    const fullUrl = tab ? tab.url : ''
+    if (isHomePage(fullUrl)) {
+      urlInput.value = ''
+      return
+    }
+    if (urlClickCount === 0) {
+      urlInput.value = getUrlWithoutProtocol(fullUrl)
+    }
+    urlInput.select()
+  })
+
+  btnBack.onclick   = () => { const t = getActiveTab(); if(t) t.wv.goBack() }
+  btnFwd.onclick    = () => { const t = getActiveTab(); if(t) t.wv.goForward() }
+  btnReload.onclick = () => { const t = getActiveTab(); if(t) t.wv.reload() }
+  btnHome.onclick   = () => { const t = getActiveTab(); if(t) t.wv.loadURL('https://www.google.pl') }
+  tabNewBtn.addEventListener('click', () => createTab('https://www.google.pl'))
+
+  document.getElementById('btn-min').onclick   = () => window.electronAPI.minimize()
+  document.getElementById('btn-max').onclick   = () => window.electronAPI.maximize()
+  document.getElementById('btn-close').onclick = () => window.electronAPI.close()
+
+  // Dropdown — nadpisz poprzedni listener (teraz mamy jeden globalny)
+  menuBtn.onclick = e => { e.stopPropagation(); hideSecPopup(); dlPanel.classList.remove('open'); dropdown.classList.toggle('open') }
+
+  // Ustawienia
+  document.getElementById('dd-settings').onclick = e => {
+    e.stopPropagation()
+    dropdown.classList.remove('open')
+    settingsOverlay.classList.add('open')
+  }
+  document.getElementById('settings-close').onclick = () => settingsOverlay.classList.remove('open')
+  settingsOverlay.addEventListener('click', e => {
+    if (e.target === settingsOverlay) settingsOverlay.classList.remove('open')
+  })
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.onclick = () => {
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'))
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'))
+      item.classList.add('active')
+      document.getElementById('section-' + item.dataset.section).classList.add('active')
+    }
+  })
+
+  // Motywy
+  let currentTheme = 'light'
+  function applyTheme(theme, save = true) {
+    currentTheme = theme
+    document.documentElement.classList.toggle('light', theme === 'light')
+    document.querySelectorAll('.theme-wrap').forEach(w => {
+      w.classList.toggle('selected', w.dataset.theme === theme)
+    })
+    if (save) window.electronAPI.saveSettings({ theme, expandBar: expandBarEnabled })
+  }
+  document.getElementById('wrap-dark').addEventListener('click', () => applyTheme('dark'))
+  document.getElementById('wrap-light').addEventListener('click', () => applyTheme('light'))
+
+  // Opcja rozszerzania paska wyszukiwania
+  let expandBarEnabled = true
+  const toggleExpandBar = document.getElementById('toggle-expand-bar')
+
+  function applyExpandBar(enabled, save = true) {
+    expandBarEnabled = enabled
+    toggleExpandBar.checked = enabled
+    urlWrap.classList.toggle('bar-expanded', enabled)
+    document.getElementById('navbar').classList.toggle('bar-compact', !enabled)
+    if (save) window.electronAPI.saveSettings({ theme: currentTheme, expandBar: enabled })
+  }
+
+  toggleExpandBar.addEventListener('change', () => {
+    applyExpandBar(toggleExpandBar.checked)
+  })
+
+  window.electronAPI.loadSettings().then(s => {
+    applyTheme(s.theme || 'light', false)
+    applyExpandBar(s.expandBar !== false, false)   // domyślnie true
+  }).catch(() => {
+    applyTheme('light', false)
+    applyExpandBar(true, false)
+  })
+
+  // Zakładki
+  let bookmarks = []
+  const bkBar       = document.getElementById('bookmarks-bar')
+  const bkAddBtn    = document.getElementById('bk-add-btn')
+  const bkOverlay   = document.getElementById('bk-modal-overlay')
+  const bkNameInput = document.getElementById('bk-name-input')
+  const bkUrlInput  = document.getElementById('bk-url-input')
+  let bkEditIndex   = -1   // -1 = nowa zakładka, >=0 = edycja
+
+  function getFavicon(url) {
+    try { return `https://www.google.com/s2/favicons?domain=${new URL(url).origin}&sz=32` }
+    catch { return '' }
+  }
+
+  function openBkModal(idx = -1) {
+    bkEditIndex = idx
+    const modal = bkOverlay.querySelector('h3') || bkOverlay
+    const heading = bkOverlay.querySelector('h3')
+    if (idx === -1) {
+      if (heading) heading.textContent = 'Dodaj zakładkę'
+      bkUrlInput.value  = urlInput.value || 'https://'
+      bkNameInput.value = document.title.replace(' — Nitrix', '').trim()
+    } else {
+      const bk = bookmarks[idx]
+      if (heading) heading.textContent = 'Edytuj zakładkę'
+      bkNameInput.value = bk.name
+      bkUrlInput.value  = bk.url
+    }
+    bkOverlay.classList.add('open')
+    setTimeout(() => bkNameInput.focus(), 50)
+  }
+
+  function renderBookmarks() {
+    document.querySelectorAll('.bk-item').forEach(el => el.remove())
+    bookmarks.forEach((bk, idx) => {
+      const btn = document.createElement('button')
+      btn.className = 'bk-item'
+      btn.title = bk.url
+      btn.innerHTML = `
+        <img src="${getFavicon(bk.url)}" onerror="this.style.display='none'" alt="">
+        <span class="bk-name">${bk.name}</span>
+        <span class="bk-delete" data-idx="${idx}" title="Usuń">×</span>
+      `
+      btn.addEventListener('click', e => {
+        if (e.target.classList.contains('bk-delete')) {
+          e.stopPropagation()
+          bookmarks.splice(idx, 1)
+          window.electronAPI.saveBookmarks(bookmarks)
+          renderBookmarks()
+          return
+        }
+        navigate(bk.url)
+      })
+      btn.addEventListener('contextmenu', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        showCtxMenu(e.clientX, e.clientY, 'bookmark', idx)
+      })
+      bkBar.insertBefore(btn, bkAddBtn)
+    })
+  }
+
+  bkAddBtn.addEventListener('click', e => {
+    e.stopPropagation()
+    openBkModal(-1)
+  })
+  document.getElementById('bk-cancel').addEventListener('click', () => bkOverlay.classList.remove('open'))
+  bkOverlay.addEventListener('click', e => { if (e.target === bkOverlay) bkOverlay.classList.remove('open') })
+  document.getElementById('bk-save').addEventListener('click', () => {
+    const name = bkNameInput.value.trim()
+    let   url  = bkUrlInput.value.trim()
+    if (!name || !url) return
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+    if (bkEditIndex === -1) {
+      bookmarks.push({ name, url })
+    } else {
+      bookmarks[bkEditIndex] = { name, url }
+    }
+    window.electronAPI.saveBookmarks(bookmarks)
+    renderBookmarks()
+    bkOverlay.classList.remove('open')
+  })
+  bkUrlInput.addEventListener('keydown',  e => { if (e.key === 'Enter') document.getElementById('bk-save').click() })
+  bkNameInput.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('bk-save').click() })
+  window.electronAPI.loadBookmarks().then(data => {
+    bookmarks = Array.isArray(data) ? data : []
+    renderBookmarks()
+  }).catch(() => { bookmarks = []; renderBookmarks() })
+
+  // ══════════════════════════════════════════════════════════════════
+  //  HISTORIA PRZEGLĄDANIA
+  // ══════════════════════════════════════════════════════════════════
+  const historyOverlay  = document.getElementById('history-overlay')
+  const historyList     = document.getElementById('history-list')
+  const historySearch   = document.getElementById('history-search')
+  const historyEmpty    = document.getElementById('history-empty')
+  const historyClearBtn = document.getElementById('history-clear-btn')
+  const historyCloseBtn = document.getElementById('history-close-btn')
+
+  let historyData = []
+
+  function closeHistoryOverlay() {
+    historyOverlay.classList.remove('open')
+    setTimeout(() => { urlInput.focus(); urlInput.select() }, 60)
+  }
+
+  function formatHistoryTime(timestamp) {
+    const d = new Date(timestamp)
+    return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  function formatHistoryDayLabel(timestamp) {
+    const d = new Date(timestamp)
+    const today = new Date()
+    const yesterday = new Date(); yesterday.setDate(today.getDate() - 1)
+    if (d.toDateString() === today.toDateString()) return 'Dzisiaj'
+    if (d.toDateString() === yesterday.toDateString()) return 'Wczoraj'
+    return d.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  }
+
+  function renderHistory(filter = '') {
+    Array.from(historyList.children).forEach(el => {
+      if (el.id !== 'history-empty') el.remove()
+    })
+    const q = filter.trim().toLowerCase()
+    const filtered = q
+      ? historyData.filter(h => h.title.toLowerCase().includes(q) || h.url.toLowerCase().includes(q))
+      : historyData
+
+    if (filtered.length === 0) {
+      historyEmpty.style.display = 'flex'
+      historyEmpty.textContent = q ? 'Brak wyników dla "' + filter + '"' : ''
+      if (!q) {
+        historyEmpty.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Brak historii`
+      }
+      return
+    }
+    historyEmpty.style.display = 'none'
+
+    let lastDay = null
+    filtered.forEach(entry => {
+      const dayLabel = formatHistoryDayLabel(entry.timestamp)
+      if (dayLabel !== lastDay) {
+        lastDay = dayLabel
+        const label = document.createElement('div')
+        label.className = 'history-day-label'
+        label.textContent = dayLabel
+        historyList.appendChild(label)
+      }
+      const item = document.createElement('div')
+      item.className = 'history-item'
+
+      const favicon = document.createElement('img')
+      favicon.className = 'history-favicon'
+      try { favicon.src = `https://www.google.com/s2/favicons?domain=${new URL(entry.url).hostname}&sz=32` }
+      catch { favicon.style.display = 'none' }
+      favicon.onerror = () => { favicon.style.display = 'none' }
+
+      const info = document.createElement('div')
+      info.className = 'history-info'
+      info.innerHTML = `
+        <div class="history-title">${entry.title || entry.url}</div>
+        <div class="history-url">${entry.url}</div>
+      `
+      const time = document.createElement('div')
+      time.className = 'history-time'
+      time.textContent = formatHistoryTime(entry.timestamp)
+
+      const delBtn = document.createElement('button')
+      delBtn.className = 'history-delete'
+      delBtn.title = 'Usuń z historii'
+      delBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>`
+      delBtn.addEventListener('click', async e => {
+        e.stopPropagation()
+        await window.electronAPI.deleteHistory(entry.timestamp)
+        historyData = historyData.filter(h => h.timestamp !== entry.timestamp)
+        renderHistory(historySearch.value)
+      })
+
+      item.append(favicon, info, time, delBtn)
+      item.addEventListener('click', () => { navigate(entry.url); closeHistoryOverlay() })
+      historyList.appendChild(item)
+    })
+  }
+
+  function openHistory() {
+    dropdown.classList.remove('open')
+    window.electronAPI.loadHistory().then(data => {
+      historyData = Array.isArray(data) ? data : []
+      historySearch.value = ''
+      renderHistory()
+      historyOverlay.classList.add('open')
+      // Przywróć aktywną zakładkę sidebar do przeglądania
+      document.querySelectorAll('.history-sidebar-item').forEach(i => i.classList.remove('active'))
+      document.querySelectorAll('.history-section').forEach(s => s.classList.remove('active'))
+      document.querySelector('.history-sidebar-item[data-hsection="browsing"]').classList.add('active')
+      document.getElementById('history-section-browsing').classList.add('active')
+      setTimeout(() => { historySearch.focus(); historySearch.click() }, 150)
+      setTimeout(() => historySearch.focus(), 300)
+    })
+  }
+
+  document.getElementById('dd-history').addEventListener('click', e => { e.stopPropagation(); openHistory() })
+  historyCloseBtn.addEventListener('click', () => closeHistoryOverlay())
+  historyOverlay.addEventListener('click', e => { if (e.target === historyOverlay) closeHistoryOverlay() })
+  historySearch.addEventListener('input', () => renderHistory(historySearch.value))
+  historySearch.addEventListener('keydown', e => {
+    e.stopPropagation()
+    if (e.key === 'Escape') closeHistoryOverlay()
+  })
+  historySearch.addEventListener('keyup',    e => e.stopPropagation())
+  historySearch.addEventListener('keypress', e => e.stopPropagation())
+  historySearch.addEventListener('mousedown',e => e.stopPropagation())
+  historySearch.addEventListener('click',    e => { e.stopPropagation(); historySearch.focus() })
+
+  historyClearBtn.addEventListener('click', async () => {
+    const confirmed = await new Promise(resolve => {
+      const overlay = document.createElement('div')
+      overlay.style.cssText = `position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.55);border-radius:16px;display:flex;align-items:center;justify-content:center;`
+      const box = document.createElement('div')
+      box.style.cssText = `background:var(--settings-bg);border:1px solid var(--border);border-radius:12px;padding:24px 28px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center;`
+      box.innerHTML = `
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--text)">Wyczyścić całą historię?</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Tej operacji nie można cofnąć.</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="_hc_cancel" style="padding:8px 20px;border-radius:8px;border:none;background:var(--hover);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer">Anuluj</button>
+          <button id="_hc_ok"     style="padding:8px 20px;border-radius:8px;border:none;background:#c42b1c;color:#fff;font-size:14px;font-family:inherit;cursor:pointer">Wyczyść</button>
+        </div>`
+      overlay.appendChild(box)
+      const panel = document.getElementById('history-section-browsing')
+      panel.style.position = 'relative'
+      panel.appendChild(overlay)
+      box.querySelector('#_hc_cancel').onclick = () => { overlay.remove(); resolve(false) }
+      box.querySelector('#_hc_ok').onclick     = () => { overlay.remove(); resolve(true)  }
+      overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); resolve(false) } })
+    })
+    if (!confirmed) return
+    await window.electronAPI.clearHistory()
+    historyData = []
+    renderHistory()
+    closeHistoryOverlay()
+  })
+
+  // ══════════════════════════════════════════════════════════════════
+  //  HISTORIA POBIERANIA — renderowanie
+  // ══════════════════════════════════════════════════════════════════
+  const dlHistoryList      = document.getElementById('dl-history-list')
+  const dlHistorySearch    = document.getElementById('dl-history-search')
+  const dlHistoryEmpty     = document.getElementById('dl-history-empty')
+  const dlHistoryClearBtn  = document.getElementById('dl-history-clear-btn')
+  const dlHistoryCloseBtn  = document.getElementById('dl-history-close-btn')
+
+  function getDlStateIcon(state) {
+    if (state === 'completed') {
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+    }
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+  }
+
+  // ── Helpers stanu pliku w historii pobierania ──────────────────────
+  function markHistoryItemMissing(item, icon, metaEl, folderBtn, badge, stateLabel) {
+    if (item.classList.contains('file-missing')) return
+    item.classList.remove('clickable')
+    item.classList.add('file-missing')
+    item.title = 'Plik został usunięty lub przeniesiony'
+    icon.className = 'dl-history-icon missing'
+    icon.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/><line x1="9" y1="15" x2="15" y2="15"/></svg>`
+    metaEl.textContent = 'Plik usunięty lub przeniesiony'
+    metaEl.classList.add('missing')
+    if (folderBtn) folderBtn.style.display = 'none'
+    if (badge) badge.style.display = ''
+  }
+
+  function markHistoryItemRestored(item, icon, metaEl, folderBtn, badge, stateLabel, iconHtml) {
+    if (!item.classList.contains('file-missing')) return
+    item.classList.add('clickable')
+    item.classList.remove('file-missing')
+    item.title = 'Kliknij aby otworzyć plik'
+    icon.className = 'dl-history-icon done'
+    icon.innerHTML = iconHtml
+    metaEl.textContent = stateLabel
+    metaEl.classList.remove('missing')
+    if (folderBtn) folderBtn.style.display = ''
+    if (badge) badge.style.display = 'none'
+  }
+
+  function renderDlHistory(filter = '') {
+    Array.from(dlHistoryList.children).forEach(el => {
+      if (el.id !== 'dl-history-empty') el.remove()
+    })
+    const q = filter.trim().toLowerCase()
+    const filtered = q
+      ? dlHistoryData.filter(d => d.filename.toLowerCase().includes(q))
+      : dlHistoryData
+
+    if (filtered.length === 0) {
+      dlHistoryEmpty.style.display = 'flex'
+      if (q) {
+        dlHistoryEmpty.innerHTML = `Brak wyników dla "${filter}"`
+      } else {
+        dlHistoryEmpty.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Brak pobranych plików`
+      }
+      return
+    }
+    dlHistoryEmpty.style.display = 'none'
+
+    let lastDay = null
+    filtered.forEach((entry, idx) => {
+      const dayLabel = formatHistoryDayLabel(entry.timestamp)
+      if (dayLabel !== lastDay) {
+        lastDay = dayLabel
+        const label = document.createElement('div')
+        label.className = 'history-day-label'
+        label.textContent = dayLabel
+        dlHistoryList.appendChild(label)
+      }
+
+      const item = document.createElement('div')
+      const isCompleted = entry.state === 'completed'
+      item.className = 'dl-history-item' + (isCompleted ? ' clickable' : '')
+      if (isCompleted && entry.savePath) {
+        item.title = 'Kliknij aby otworzyć plik'
+        item.addEventListener('click', e => {
+          if (e.target.closest('.dl-history-delete')) return
+          if (e.target.closest('.dl-history-folder-btn')) return
+          if (item.classList.contains('file-missing')) return
+          window.electronAPI.openFile(entry.savePath)
+        })
+        // Sprawdź asynchronicznie czy plik istnieje i dostosuj UI
+        window.electronAPI.fileExists(entry.savePath).then(({ exists }) => {
+          if (!exists) {
+            markHistoryItemMissing(item, icon, metaEl, folderBtn, missingBadge, stateLabel)
+          } else {
+            markHistoryItemRestored(item, icon, metaEl, folderBtn, missingBadge, stateLabel, getDlStateIcon(entry.state))
+          }
+        }).catch(() => {})
+      }
+
+      const icon = document.createElement('div')
+      icon.className = 'dl-history-icon ' + (isCompleted ? 'done' : 'error')
+      icon.innerHTML = getDlStateIcon(entry.state)
+
+      const info = document.createElement('div')
+      info.className = 'dl-history-info'
+      const stateLabel = isCompleted
+        ? `Ukończono · ${formatBytes(entry.totalBytes)}`
+        : (entry.state === 'cancelled' ? 'Anulowano' : 'Błąd pobierania')
+      const metaEl = document.createElement('div')
+      const nameEl = document.createElement('div')
+      nameEl.className = 'dl-history-name'
+      nameEl.title = entry.filename
+      nameEl.textContent = entry.filename
+      metaEl.className = 'dl-history-meta'
+      metaEl.textContent = stateLabel + (entry.savePath && !isCompleted ? '' : entry.savePath ? ' · ' + entry.savePath : '')
+      info.append(nameEl, metaEl)
+
+      const time = document.createElement('div')
+      time.className = 'dl-history-time'
+      time.textContent = formatHistoryTime(entry.timestamp)
+
+      // Znaczek "plik usunięty" — domyślnie ukryty
+      const missingBadge = document.createElement('span')
+      missingBadge.className = 'dl-history-missing-badge'
+      missingBadge.textContent = 'Brak pliku'
+      missingBadge.style.display = 'none'
+
+      // Przycisk "pokaż w folderze" — dla ukończonych plików
+      const folderBtn = document.createElement('button')
+      folderBtn.className = 'dl-history-folder-btn'
+      folderBtn.title = 'Pokaż w folderze'
+      folderBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+      </svg>`
+      if (isCompleted && entry.savePath) {
+        folderBtn.addEventListener('click', e => {
+          e.stopPropagation()
+          window.electronAPI.showInFolder(entry.savePath)
+        })
+        // Cykliczne sprawdzanie pliku co 3s póki historia jest otwarta
+        const recheckInterval = setInterval(() => {
+          if (!historyOverlay.classList.contains('open') || !document.contains(item)) {
+            clearInterval(recheckInterval)
+            return
+          }
+          window.electronAPI.fileExists(entry.savePath).then(({ exists }) => {
+            if (!exists) markHistoryItemMissing(item, icon, metaEl, folderBtn, missingBadge, stateLabel)
+            else         markHistoryItemRestored(item, icon, metaEl, folderBtn, missingBadge, stateLabel, getDlStateIcon(entry.state))
+          }).catch(() => {})
+        }, 3000)
+      } else {
+        folderBtn.style.display = 'none'
+      }
+
+      const delBtn = document.createElement('button')
+      delBtn.className = 'dl-history-delete'
+      delBtn.title = 'Usuń z historii'
+      delBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>`
+      delBtn.addEventListener('click', e => {
+        e.stopPropagation()
+        const realIdx = dlHistoryData.findIndex(d => d.timestamp === entry.timestamp && d.filename === entry.filename)
+        if (realIdx !== -1) dlHistoryData.splice(realIdx, 1)
+        saveDlHistory()
+        renderDlHistory(dlHistorySearch.value)
+      })
+
+      item.append(icon, info, time, missingBadge, folderBtn, delBtn)
+      dlHistoryList.appendChild(item)
+    })
+  }
+
+  // Historia pobierania — sidebar switcher
+  document.querySelectorAll('.history-sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.history-sidebar-item').forEach(i => i.classList.remove('active'))
+      document.querySelectorAll('.history-section').forEach(s => s.classList.remove('active'))
+      item.classList.add('active')
+      const section = item.dataset.hsection
+      document.getElementById('history-section-' + section).classList.add('active')
+      if (section === 'downloads') {
+        renderDlHistory(dlHistorySearch.value)
+        setTimeout(() => { dlHistorySearch.focus() }, 100)
+      } else {
+        setTimeout(() => { historySearch.focus() }, 100)
+      }
+    })
+  })
+
+  dlHistorySearch.addEventListener('input', () => renderDlHistory(dlHistorySearch.value))
+  dlHistorySearch.addEventListener('keydown', e => {
+    e.stopPropagation()
+    if (e.key === 'Escape') closeHistoryOverlay()
+  })
+  dlHistorySearch.addEventListener('keyup',    e => e.stopPropagation())
+  dlHistorySearch.addEventListener('keypress', e => e.stopPropagation())
+  dlHistorySearch.addEventListener('mousedown',e => e.stopPropagation())
+  dlHistorySearch.addEventListener('click',    e => { e.stopPropagation(); dlHistorySearch.focus() })
+
+  dlHistoryCloseBtn.addEventListener('click', () => closeHistoryOverlay())
+
+  dlHistoryClearBtn.addEventListener('click', async () => {
+    const confirmed = await new Promise(resolve => {
+      const overlay = document.createElement('div')
+      overlay.style.cssText = `position:absolute;inset:0;z-index:100;background:rgba(0,0,0,.55);border-radius:16px;display:flex;align-items:center;justify-content:center;`
+      const box = document.createElement('div')
+      box.style.cssText = `background:var(--settings-bg);border:1px solid var(--border);border-radius:12px;padding:24px 28px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center;`
+      box.innerHTML = `
+        <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--text)">Wyczyścić historię pobierania?</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-bottom:20px">Tej operacji nie można cofnąć.</div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button id="_dlhc_cancel" style="padding:8px 20px;border-radius:8px;border:none;background:var(--hover);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer">Anuluj</button>
+          <button id="_dlhc_ok"     style="padding:8px 20px;border-radius:8px;border:none;background:#c42b1c;color:#fff;font-size:14px;font-family:inherit;cursor:pointer">Wyczyść</button>
+        </div>`
+      overlay.appendChild(box)
+      const section = document.getElementById('history-section-downloads')
+      section.style.position = 'relative'
+      section.appendChild(overlay)
+      box.querySelector('#_dlhc_cancel').onclick = () => { overlay.remove(); resolve(false) }
+      box.querySelector('#_dlhc_ok').onclick     = () => { overlay.remove(); resolve(true)  }
+      overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.remove(); resolve(false) } })
+    })
+    if (!confirmed) return
+    dlHistoryData = []
+    saveDlHistory()
+    renderDlHistory()
+  })
+
+  // Historia — debounce
+  const _historyDebounce = new Map()
+
+  function scheduleAddToHistory(url, title) {
+    if (!url || url.startsWith('about:') || url.startsWith('chrome:')) return
+    if (_historyDebounce.has(url)) clearTimeout(_historyDebounce.get(url))
+    _historyDebounce.set(url, setTimeout(() => {
+      _historyDebounce.delete(url)
+      addToHistory(url, title)
+    }, 800))
+  }
+
+  function addToHistory(url, title) {
+    if (!url || url.startsWith('about:') || url.startsWith('chrome:')) return
+    const entry = { url, title: title || url, timestamp: Date.now() }
+    window.electronAPI.addHistory(entry)
+    if (historyOverlay.classList.contains('open')) {
+      historyData.unshift(entry)
+      renderHistory(historySearch.value)
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  //  AUTO-UPDATE — UI
+  // ══════════════════════════════════════════════════════════════════
+  const updateOverlay      = document.getElementById('update-overlay')
+  const updateCardSub      = document.getElementById('update-card-sub')
+  const updateProgressWrap = document.getElementById('update-progress-wrap')
+  const updateProgressFill = document.getElementById('update-progress-fill')
+  const updateProgressLbl  = document.getElementById('update-progress-label')
+  const updateBtnNow       = document.getElementById('update-btn-now')
+  const updateBtnLater     = document.getElementById('update-btn-later')
+
+  let updateReady = false
+
+  function showOverlay(sub, { progress = false, ready = false, downloading = false } = {}) {
+    updateCardSub.textContent        = sub
+    updateProgressWrap.style.display = progress ? '' : 'none'
+    updateBtnNow.disabled            = downloading
+    updateBtnNow.textContent         = ready ? 'Zainstaluj i uruchom ponownie' : downloading ? 'Pobieranie…' : 'Pobierz teraz'
+    updateReady = ready
+    updateOverlay.classList.add('open')
+  }
+
+  // ── Bezpieczeństwo połączenia ────────────────────────────────────────
+  const iconSecure   = document.getElementById('icon-secure')
+  const iconInsecure = document.getElementById('icon-insecure')
+  const secPopup     = document.getElementById('sec-popup')
+  const secPopupIcon  = document.getElementById('sec-popup-icon')
+  const secPopupTitle = document.getElementById('sec-popup-title')
+  const secPopupDesc  = document.getElementById('sec-popup-desc')
+  const secCertBtn    = document.getElementById('sec-cert-btn')
+  const secCertLabel  = document.getElementById('sec-cert-label')
+  const secCertStatus = document.getElementById('sec-cert-status')
+
+  let currentIsHttps = true
+
+  function setSecurityState(url) {
+    const isHttps = (url || '').startsWith('https')
+    currentIsHttps = isHttps
+    iconSecure.style.display   = isHttps ? '' : 'none'
+    iconInsecure.style.display = isHttps ? 'none' : ''
+    urlIcon.title = isHttps ? 'Połączenie bezpieczne' : 'Połączenie niezabezpieczone'
+  }
+
+  function showSecPopup() {
+    const rect = urlIcon.getBoundingClientRect()
+    secPopup.style.left = rect.left + 'px'
+    secPopup.style.top  = (rect.bottom + 6) + 'px'
+
+    if (currentIsHttps) {
+      secPopupIcon.setAttribute('stroke', '#34a853')
+      secPopupIcon.innerHTML = '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'
+      secPopupTitle.textContent = 'Połączenie jest bezpieczne'
+      secPopupDesc.textContent  = 'Ta strona jest zabezpieczona protokołem HTTPS. Wysyłanie kart kredytowych i innych poufnych danych pozostaje prywatne.'
+      secCertLabel.textContent  = 'Certyfikat jest ważny'
+      secCertStatus.textContent = '✓'
+      secCertStatus.className   = 'sec-cert-status valid'
+      secCertBtn.style.display  = ''
+    } else {
+      secPopupIcon.setAttribute('stroke', '#fbbc04')
+      secPopupIcon.innerHTML = '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+      secPopupTitle.textContent = 'Niezabezpieczona'
+      secPopupDesc.textContent  = 'Twoje połączenie z tą witryną jest niezabezpieczone. Nie wprowadzaj poufnych danych, takich jak hasła lub karty kredytowe.'
+      secCertBtn.style.display  = 'none'
+    }
+
+    secPopup.classList.add('open')
+  }
+
+  urlIcon.addEventListener('click', e => {
+    e.stopPropagation()
+    if (secPopup.classList.contains('open')) { hideSecPopup(); return }
+    closeAllMenus()
+    showSecPopup()
+  })
+
+  secCertBtn.addEventListener('click', async e => {
+    e.stopPropagation()
+    hideSecPopup()
+    const tab = getActiveTab()
+    if (!tab || !tab.url) return
+    let hostname = ''
+    try { hostname = new URL(tab.url).hostname } catch { return }
+
+    const certModalOverlay   = document.getElementById('cert-modal-overlay')
+    const certSectionOgolne  = document.getElementById('cert-section-ogolne')
+    const certSectionZaawans = document.getElementById('cert-section-zaawansowane')
+
+    // Reset do Ogólne
+    document.querySelectorAll('.cert-sidebar-item').forEach(i => i.classList.remove('active'))
+    document.querySelector('[data-certsection="ogolne"]').classList.add('active')
+    certSectionOgolne.classList.add('active')
+    certSectionZaawans.classList.remove('active')
+
+    certSectionOgolne.innerHTML  = `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:13px">Ładowanie…</div>`
+    certSectionZaawans.innerHTML = ''
+    certModalOverlay.classList.add('open')
+
+    const info = await window.electronAPI.getCertInfo(hostname).catch(() => null)
+
+    if (!info || !info.cert) {
+      certSectionOgolne.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:13px">Nie można pobrać danych certyfikatu.</div>`
+      return
+    }
+
+    const c = info.cert
+    const isValid = info.valid !== false
+    const BRAK = '<span style="color:var(--text-dim);font-style:italic">&lt;brak w certyfikacie&gt;</span>'
+
+    function formatDate(ts) {
+      if (!ts) return BRAK
+      return new Date(ts * 1000).toLocaleDateString('pl-PL', { day: '2-digit', month: 'long', year: 'numeric' })
+    }
+    function val(v) {
+      if (v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0)) return BRAK
+      if (Array.isArray(v)) return v.join(', ')
+      return v
+    }
+    function mono(v) {
+      if (!v) return BRAK
+      return `<span style="font-family:monospace;font-size:11px">${v}</span>`
+    }
+
+    const now = Date.now() / 1000
+    const expired = c.validExpiry && now > c.validExpiry
+    const notYet  = c.validStart  && now < c.validStart
+    const certOk  = isValid && !expired && !notYet
+
+    // ── Sekcja Ogólne ──────────────────────────────────────────────
+    certSectionOgolne.innerHTML = `
+      <div class="cert-section">
+        <span class="cert-validity-badge ${certOk ? 'valid' : 'invalid'}">
+          ${certOk ? '✓ Certyfikat jest ważny' : '✗ Certyfikat jest nieważny'}
+        </span>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Podmiot (Subject)</div>
+        <div class="cert-row"><span class="cert-row-label">Nazwa (CN)</span><span class="cert-row-value">${val(c.subject?.commonName)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Organizacja</span><span class="cert-row-value">${val(c.subject?.organizations)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Kraj</span><span class="cert-row-value">${val(c.subject?.country)}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Wystawca (Issuer)</div>
+        <div class="cert-row"><span class="cert-row-label">Nazwa (CN)</span><span class="cert-row-value">${val(c.issuer?.commonName)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Organizacja</span><span class="cert-row-value">${val(c.issuer?.organizations)}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Ważność</div>
+        <div class="cert-row"><span class="cert-row-label">Ważny od</span><span class="cert-row-value">${formatDate(c.validStart)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Ważny do</span><span class="cert-row-value" style="${expired ? 'color:#e57373' : ''}">${formatDate(c.validExpiry)}${expired ? ' <span style="color:#e57373;font-size:11px">(wygasł)</span>' : ''}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Odciski cyfrowe SHA-256</div>
+        <div class="cert-row"><span class="cert-row-label">Certyfikat</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.sha256 || BRAK}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Klucz publiczny</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.pkSha256 || BRAK}</span></div>
+      </div>
+    `
+
+    // ── Sekcja Zaawansowane ────────────────────────────────────────
+    const pkAlgo = val(c.publicKey?.algorithm?.name || c.publicKey?.type || null)
+    const pkSize = val(c.publicKey?.algorithm?.modulusLength || c.publicKey?.algorithm?.namedCurve || null)
+
+    certSectionZaawans.innerHTML = `
+      <div class="cert-section">
+        <div class="cert-section-title">Podmiot — szczegóły</div>
+        <div class="cert-row"><span class="cert-row-label">Nazwa (CN)</span><span class="cert-row-value">${val(c.subject?.commonName)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Organizacja</span><span class="cert-row-value">${val(c.subject?.organizations)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Jednostka (OU)</span><span class="cert-row-value">${val(c.subject?.organizationUnits)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Kraj</span><span class="cert-row-value">${val(c.subject?.country)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Stan/Prowincja</span><span class="cert-row-value">${val(c.subject?.stateOrProvince)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Miejscowość</span><span class="cert-row-value">${val(c.subject?.locality)}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Wystawca — szczegóły</div>
+        <div class="cert-row"><span class="cert-row-label">Nazwa (CN)</span><span class="cert-row-value">${val(c.issuer?.commonName)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Organizacja</span><span class="cert-row-value">${val(c.issuer?.organizations)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Jednostka (OU)</span><span class="cert-row-value">${val(c.issuer?.organizationUnits)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Kraj</span><span class="cert-row-value">${val(c.issuer?.country)}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Certyfikat</div>
+        <div class="cert-row"><span class="cert-row-label">Numer seryjny</span><span class="cert-row-value">${mono(c.serialNumber)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Algorytm podpisu</span><span class="cert-row-value">${val(c.signatureAlgorithm || c.algorithm || null)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Wersja</span><span class="cert-row-value">${val(c.version != null ? 'v' + c.version : null)}</span></div>
+        <div class="cert-row"><span class="cert-row-label">SAN</span><span class="cert-row-value" style="word-break:break-all">${val(c.subjectAltName || null)}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Klucz publiczny</div>
+        <div class="cert-row"><span class="cert-row-label">Algorytm</span><span class="cert-row-value">${pkAlgo}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Rozmiar / Krzywa</span><span class="cert-row-value">${pkSize}</span></div>
+      </div>
+
+      <div class="cert-section">
+        <div class="cert-section-title">Odciski cyfrowe SHA-256</div>
+        <div class="cert-row"><span class="cert-row-label">Certyfikat</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.sha256 || BRAK}</span></div>
+        <div class="cert-row"><span class="cert-row-label">Klucz publiczny</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.pkSha256 || BRAK}</span></div>
+      </div>
+    `
+  })
+
+  // Sidebar switcher certyfikatu
+  document.querySelectorAll('.cert-sidebar-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.cert-sidebar-item').forEach(i => i.classList.remove('active'))
+      document.querySelectorAll('.cert-section-wrap').forEach(s => s.classList.remove('active'))
+      item.classList.add('active')
+      document.getElementById('cert-section-' + item.dataset.certsection).classList.add('active')
+    })
+  })
+
+  document.getElementById('cert-modal-close').addEventListener('click', () => {
+    document.getElementById('cert-modal-overlay').classList.remove('open')
+  })
+  document.getElementById('cert-modal-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('cert-modal-overlay'))
+      document.getElementById('cert-modal-overlay').classList.remove('open')
+  })
+
+  // Zamknij po kliknięciu gdziekolwiek
+  document.addEventListener('click', () => hideSecPopup())
+  secPopup.addEventListener('click', e => e.stopPropagation())
+  const ctxMenu     = document.getElementById('ctx-menu')
+  const ctxBackdrop = document.getElementById('ctx-backdrop')
+  let ctxBkIdx = -1  // indeks zakładki w trybie bookmark
+
+  function showCtxMenu(x, y, mode = 'webview', bkIdx = -1) {
+    ctxBkIdx = bkIdx
+    ctxMenu.className = ''          // wyczyść klasy
+    ctxMenu.classList.add('open', 'mode-' + mode)
+    ctxBackdrop.classList.add('open')
+    // Upewnij się że menu nie wychodzi za ekran
+    const mw = 220, mh = ctxMenu.offsetHeight || 80
+    const wx = window.innerWidth, wy = window.innerHeight
+    ctxMenu.style.left = (x + mw > wx ? wx - mw - 8 : x) + 'px'
+    ctxMenu.style.top  = (y + mh > wy ? wy - mh - 8 : y) + 'px'
+  }
+
+  function hideCtxMenu() {
+    ctxMenu.classList.remove('open')
+    ctxBackdrop.classList.remove('open')
+    ctxBkIdx = -1
+  }
+
+  ctxBackdrop.addEventListener('click', () => hideCtxMenu())
+  ctxBackdrop.addEventListener('contextmenu', e => { e.preventDefault(); hideCtxMenu() })
+
+  ctxMenu.addEventListener('click', e => {
+    const item = e.target.closest('.ctx-item')
+    if (!item) return
+    const action = item.dataset.action
+    const savedBkIdx = ctxBkIdx   // zapamiętaj PRZED hideCtxMenu które resetuje ctxBkIdx
+    hideCtxMenu()
+    if (action === 'refresh') {
+      const t = getActiveTab()
+      if (t) t.wv.reload()
+    } else if (action === 'bk-edit') {
+      openBkModal(savedBkIdx)
+    } else if (action === 'bk-delete') {
+      if (savedBkIdx !== -1) {
+        bookmarks.splice(savedBkIdx, 1)
+        window.electronAPI.saveBookmarks(bookmarks)
+        renderBookmarks()
+      }
+    }
+  })
+  ctxMenu.addEventListener('click', e => e.stopPropagation())
+
+  window.electronAPI.onContextMenuAction(action => {
+    if (action === 'refresh') {
+      const t = getActiveTab()
+      if (t) t.wv.reload()
+    }
+  })
+
+  // Strony otwierające nowe okna → nowa karta
+  window.electronAPI.onOpenInNewTab(url => {
+    if (url && url !== 'about:blank') createTab(url)
+  })
+
+  window.electronAPI.onUpdateStatus(data => {
+    switch (data.status) {
+      case 'available':
+        showOverlay(`Wersja ${data.version} jest już dostępna. Pobierz teraz aby korzystać z najnowszych funkcji.`, { progress: false })
+        break
+      case 'downloading':
+        updateProgressFill.style.width = data.percent + '%'
+        updateProgressLbl.textContent  = data.percent + '%'
+        showOverlay(`Pobieranie wersji… ${data.percent}%`, { progress: true, downloading: true })
+        break
+      case 'downloaded':
+        showOverlay(`Wersja ${data.version} jest gotowa do instalacji.`, { ready: true })
+        break
+    }
+  })
+
+  updateBtnNow.addEventListener('click', () => {
+    if (updateReady) {
+      window.electronAPI.installUpdate()
+    } else {
+      // Rozpocznij pobieranie i pokaż pasek postępu
+      window.electronAPI.downloadUpdate()
+      updateBtnNow.disabled = true
+      updateBtnNow.textContent = 'Pobieranie…'
+      updateProgressWrap.style.display = ''
+    }
+  })
+
+  updateBtnLater.addEventListener('click', () => {
+    updateOverlay.classList.remove('open')
+    window.electronAPI.dismissUpdate()   // main.js ustawi flagę — nie pokaże w tej sesji
+  })
+
+  // Wymuszenie wymiarów webview
+  let _resizeTimer = null
+  function fixWebviewSizes() {
+    const rect = wvCont.getBoundingClientRect()
+    if (rect.height < 10) return
+    tabs.forEach(t => {
+      t.wv.style.width  = rect.width  + 'px'
+      t.wv.style.height = rect.height + 'px'
+    })
+  }
+  const resizeObs = new ResizeObserver(() => {
+    if (_resizeTimer) clearTimeout(_resizeTimer)
+    _resizeTimer = setTimeout(fixWebviewSizes, 50)
+  })
+  resizeObs.observe(wvCont)
+  window.addEventListener('resize', () => {
+    if (_resizeTimer) clearTimeout(_resizeTimer)
+    _resizeTimer = setTimeout(fixWebviewSizes, 50)
+  })
+  setTimeout(fixWebviewSizes, 200)
+
+  // Otwórz pierwszą kartę przy starcie
+  setTimeout(() => createTab('https://www.google.pl'), 100)
 </script>
 </body>
 </html>
