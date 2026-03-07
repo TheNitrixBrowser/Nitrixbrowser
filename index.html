@@ -18,6 +18,20 @@
     --muted: #5a5a6a;
   }
 
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, var(--nitro), #00a86b);
+    border-radius: 99px;
+    box-shadow: 0 0 8px rgba(0,245,160,0.4);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #33ffb8, var(--nitro));
+    box-shadow: 0 0 14px rgba(0,245,160,0.7);
+  }
+  * { scrollbar-width: thin; scrollbar-color: var(--nitro) var(--bg); }
+
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
 
@@ -445,11 +459,15 @@
   <div class="footer-copy">© 2026 Nitrix. Projekt w trakcie rozwoju.</div>
   <div class="footer-alpha">ALPHA — wczesny dostęp</div>
   <div class="footer-contact">
-    Aby się ze mną skontaktować, napisz na: <a href="mailto:thenitrixbrowser@gmail.com">thenitrixbrowser@gmail.com</a>
+    Aby się ze mną skontaktować, napisz na: <a href="/cdn-cgi/l/email-protection#3d4955585354494f54455f4f524a4e584f7d5a505c5451135e5250"><span class="__cf_email__" data-cfemail="deaab6bbb0b7aaacb7a6bcacb1a9adbbac9eb9b3bfb7b2f0bdb1b3">[email&#160;protected]</span></a>
   </div>
 </footer>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+  // BLOCK SCROLL DURING INTRO
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { document.body.style.overflow = ''; }, 4400);
+
   // CURSOR
   const cursor = document.getElementById('cursor');
   const ring   = document.getElementById('cursorRing');
