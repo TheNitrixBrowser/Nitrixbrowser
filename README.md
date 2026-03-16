@@ -26,6 +26,7 @@ Używasz Nitrix na własną odpowiedzialność — szczegóły w licencji MIT.
 - Automatyczne aktualizacje
 - Tryb jasny i ciemny
 - Brak własnej telemetrii — Nitrix nie wysyła żadnych danych do własnych serwerów
+- I wiele więcej!
 
 ---
 
