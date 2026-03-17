@@ -38,7 +38,7 @@ Nitrix nie zbiera żadnych danych użytkownika na własne serwery.
 
 - **Google Favicon Service** (`google.com/s2/favicons`) — używany do wyświetlania ikon stron. Google może widzieć jakie domeny odwiedzasz
 - **Google DNS prefetch** — w celu przyspieszenia ładowania stron, nagłówki strony zawierają prefetch do domen Google
-- **Strona startowa** — google.pl (na ten moment niemodyfikowalna)
+- **Strona startowa** — domyślnie google.pl (można modyfikować)
 
 ---
 
