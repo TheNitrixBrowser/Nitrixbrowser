@@ -4,13 +4,11 @@ Nitrix to lekka przeglądarka internetowa zbudowana na Electron i Chromium, zapr
 
 ---
 
-## ⚠️ Wersja Alpha
+## ⚠️ Wersja BETA
 
-Nitrix jest projektem w **aktywnej fazie rozwoju (Alpha)**. Oznacza to że:
+Nitrix jest projektem w **aktywnej fazie rozwoju (BETA)**. Oznacza to że:
 
 - Mogą występować błędy, w tym błędy bezpieczeństwa
-- **Nie zaleca się używania do operacji bankowych ani przechowywania wrażliwych danych**
-- Do czasu wersji beta lub stabilnej używaj sprawdzonych przeglądarek do krytycznych czynności
 
 Używasz Nitrix na własną odpowiedzialność — szczegóły w licencji MIT.
 
@@ -19,12 +17,15 @@ Używasz Nitrix na własną odpowiedzialność — szczegóły w licencji MIT.
 ## Funkcje
 
 - Wielokartowe przeglądanie z intuicyjnym interfejsem
-- Pasek zakładek z obsługą favicon
+- Pasek zakładek z obsługą favicon oraz lista wszystkich zakładek.
 - Historia przeglądania z wyszukiwaniem
-- Panel pobierania plików z podglądem postępu i prędkości
+- Menedżer haseł z autocomplete
+- Adblock Nitrix (z wbudowanymi filtrami oraz EasyList, EasyPrivacy, EasyList Cookie.
+- Panel pobierania plików z podglądem postępu i prędkości, przyciski zatrzymania oraz anulowania pobierania.
 - Wskaźnik bezpieczeństwa HTTPS z podglądem certyfikatu SSL
 - Automatyczne aktualizacje
 - Tryb jasny i ciemny
+- - Język Polski i Angielski
 - Brak własnej telemetrii — Nitrix nie wysyła żadnych danych do własnych serwerów
 - I wiele więcej!
 
