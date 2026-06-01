@@ -1,73 +1,81 @@
 # Nitrix Browser
 
-Nitrix to lekka przeglądarka internetowa zbudowana na Electron i Chromium, zaprojektowana z myślą o prostocie i pełnej kontroli użytkownika — bez zbędnych funkcji, bez własnej telemetrii.
+Nitrix to lekka przeglądarka internetowa zbudowana na Electron i Chromium, zaprojektowana z myślą o prostocie, wygodzie i większej kontroli użytkownika.  
+Projekt nie posiada własnej telemetrii i nie wysyła danych użytkownika na własne serwery.
 
----
+## Wersja 2.0.0 BETA
 
-## ⚠️ Wersja BETA
+Nitrix jest projektem w aktywnej fazie rozwoju. Oznacza to, że:
 
-Nitrix jest projektem w **aktywnej fazie rozwoju (BETA)**. Oznacza to że:
+- mogą występować błędy,
+- część funkcji może jeszcze wymagać dopracowania,
+- mogą występować błędy bezpieczeństwa,
+- używasz Nitrix na własną odpowiedzialność.
 
-- Mogą występować błędy, w tym błędy bezpieczeństwa
-
-Używasz Nitrix na własną odpowiedzialność — szczegóły w licencji MIT.
-
----
+Szczegóły znajdują się w licencji MIT.
 
 ## Funkcje
 
 - Wielokartowe przeglądanie z intuicyjnym interfejsem
-- Pasek zakładek z obsługą favicon oraz lista wszystkich zakładek.
+- Pasek zakładek z obsługą favicon oraz lista wszystkich zakładek
 - Historia przeglądania z wyszukiwaniem
 - Menedżer haseł z autocomplete
-- Adblock Nitrix (z wbudowanymi filtrami oraz EasyList, EasyPrivacy, EasyList Cookie.
-- Panel pobierania plików z podglądem postępu i prędkości, przyciski zatrzymania oraz anulowania pobierania.
+- Import danych z innych przeglądarek
+- Możliwość ustawienia Nitrix jako domyślnej przeglądarki
+- Obsługa lokalnych plików HTML
+- Panel „Co Nowego?” z informacjami o zmianach w wersji
+- Nitrix Adblock z wbudowanymi filtrami oraz obsługą EasyList, EasyPrivacy i EasyList Cookie
+- Niewielkie poprawki blokowania reklam na YouTube
+- Panel pobierania plików z podglądem postępu i prędkości
+- Przyciski zatrzymania, wznowienia oraz anulowania pobierania
 - Wskaźnik bezpieczeństwa HTTPS z podglądem certyfikatu SSL
 - Automatyczne aktualizacje
 - Tryb jasny i ciemny
-- - Język Polski i Angielski
-- Brak własnej telemetrii — Nitrix nie wysyła żadnych danych do własnych serwerów
-- I wiele więcej!
+- Język polski i angielski
+- Brak własnej telemetrii
+- I wiele więcej
 
----
+## Co nowego w 2.0.0
+
+- Dodano możliwość ustawienia Nitrix jako domyślnej przeglądarki w systemie Windows
+- Dodano obsługę otwierania lokalnych plików HTML
+- Dodano panel „Co Nowego?”
+- Poprawiono wygląd i tłumaczenia importu danych
+- Poprawiono część błędów związanych z paskiem adresu / wyszukiwania
+- Wprowadzono drobne poprawki działania adblocka na YouTube
+- Zrezygnowano z `better-sqlite3` na rzecz zwykłego rozwiązania SQL, co zmniejsza problemy z budowaniem aplikacji i poprawia stabilność projektu
 
 ## Prywatność
 
-Nitrix nie zbiera żadnych danych użytkownika na własne serwery.
+Nitrix nie zbiera danych użytkownika na własne serwery.
 
-**Jednak korzystamy z usług zewnętrznych które mogą zbierać dane:**
+Aplikacja może jednak korzystać z usług zewnętrznych, które mogą przetwarzać część danych:
 
-- **Google Favicon Service** (`google.com/s2/favicons`) — używany do wyświetlania ikon stron. Google może widzieć jakie domeny odwiedzasz
-- **Google DNS prefetch** — w celu przyspieszenia ładowania stron, nagłówki strony zawierają prefetch do domen Google
-- **Strona startowa** — domyślnie google.pl (można modyfikować)
-
----
+- Google Favicon Service (`google.com/s2/favicons`) — używany do wyświetlania ikon stron. Google może widzieć domeny, dla których pobierane są ikony.
+- Google DNS prefetch — używany w celu przyspieszenia ładowania wybranych zasobów.
+- Domyślna strona startowa — domyślnie `google.pl`, ale można ją zmienić w ustawieniach.
 
 ## Stack technologiczny
 
 | Warstwa | Technologia |
-|---|---|
-| Silnik przeglądarki | Chromium (przez Electron) |
+| --- | --- |
+| Silnik przeglądarki | Chromium przez Electron |
 | JavaScript engine | V8 |
 | Framework | Electron |
 | UI | HTML / CSS / Vanilla JS |
 | Aktualizacje | electron-updater |
 
----
-
 ## Instalacja
 
-Pobierz najnowszy instalator `.exe` ze strony [TheNitrixBrowser.github.io/Nitrixbrowser/](https://TheNitrixBrowser.github.io/Nitrixbrowser/)
+Pobierz najnowszy instalator `.exe` ze strony:
 
----
+[TheNitrixBrowser.github.io/Nitrixbrowser](https://TheNitrixBrowser.github.io/Nitrixbrowser/)
 
 ## Licencja
 
-MIT — szczegóły w pliku [LICENSE](./LICENSE)
-
----
+MIT — szczegóły w pliku `LICENSE`.
 
 ## Autor
 
-Projekt tworzony przez jedną osobę w ramach pasji do tworzenia oprogramowania.
-Feedback, bugi i pomysły mile widziane.
+Projekt tworzony przez jedną osobę w ramach pasji do tworzenia oprogramowania.  
+Feedback, zgłoszenia błędów i pomysły są mile widziane.
