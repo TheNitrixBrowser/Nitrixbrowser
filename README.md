@@ -30,7 +30,7 @@ Szczegóły znajdują się w licencji MIT.
 - Przyciski zatrzymania, wznowienia oraz anulowania pobierania
 - Wskaźnik bezpieczeństwa HTTPS z podglądem certyfikatu SSL
 - Automatyczne aktualizacje
-- Tryb jasny i ciemny oraz prywatny
+- Tryb jasny, ciemny i prywatny
 - Język polski i angielski
 - Brak własnej telemetrii
 - I wiele więcej
