@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'sha256-9UC4BfB1EFhPoVXCZstQjzE16geOoOIxaNhtWR3v9zg=' 'sha256-1lgrzLoldp+Mw0EH+rdnGYa5XPOSkiiWvj3MdstuCaM='; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none';">
+  <title>Nitrix</title>
+  <link rel="dns-prefetch" href="//google.pl">
+  <link rel="dns-prefetch" href="//google.com">
+  <link rel="dns-prefetch" href="//googleapis.com">
+  <link rel="dns-prefetch" href="//gstatic.com">
+  <link rel="dns-prefetch" href="//youtube.com">
+  <link rel="dns-prefetch" href="//facebook.com">
+  <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+  <link rel="dns-prefetch" href="//cloudflare.com">
+  <link rel="preconnect" href="https://www.google.pl" crossorigin>
+  <link rel="preconnect" href="https://www.google.com" crossorigin>
+  <link rel="stylesheet" href="renderer.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- Titlebar -->
+  <div id="titlebar">
+    <div id="tabs-bar">
+      <button id="tab-new-btn" title="Nowa karta" data-i18n-title="new_tab">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="win-btns">
+      <button class="win-btn" id="btn-min" title="Minimalizuj" data-i18n-title="minimize">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="2" y1="7" x2="12" y2="7"/></svg>
+      </button>
+      <button class="win-btn" id="btn-max" title="Maksymalizuj" data-i18n-title="maximize">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="2" width="10" height="10" rx="1.5"/></svg>
+      </button>
+      <button class="win-btn close" id="btn-close" title="Zamknij" data-i18n-title="close">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Pasek trybu prywatnego -->
+  <div id="private-banner">
+    <div id="private-banner-bar">
+      <div id="private-banner-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span data-i18n="private_banner">Tryb prywatny — przeglądasz bez śladu</span>
+      </div>
+      <div id="private-banner-right">
+        <button id="private-banner-hide" data-i18n="hide">Ukryj</button>
+        <span id="private-banner-chevron">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c6fa0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+    <div id="private-banner-details">
+      <div class="private-detail-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span data-i18n="private_no_history">Historia przeglądania nie jest zapisywana</span>
+      </div>
+      <div class="private-detail-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        <span data-i18n="priv_detail_cookies">Pliki cookie i dane stron są usuwane po zamknięciu okna</span>
+      </div>
+      <div class="private-detail-row">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        <span data-i18n="priv_detail_bookmarks">Zakładki i pobrane pliki nie są zapisywane</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <div id="navbar">
+    <button class="nav-btn" id="btn-back" disabled title="Wstecz" data-i18n-title="back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-forward" disabled title="Do przodu" data-i18n-title="forward">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <button class="nav-btn" id="btn-reload" title="Odśwież" data-i18n-title="reload">
+      <svg id="icon-reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+    </button>
+    <button class="nav-btn" id="btn-home" title="Strona główna" data-i18n-title="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </button>
+
+    <div id="url-wrap">
+      <span id="url-icon" title="Informacje o połączeniu" data-i18n-title="connection_info">
+        <!-- ikona kłódki HTTPS -->
+        <svg id="icon-secure" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <!-- ikona ostrzeżenia HTTP — domyślnie ukryta -->
+        <svg id="icon-insecure" viewBox="0 0 24 24" fill="none" stroke="#fbbc04" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </span>
+      <input id="url-input" type="text" placeholder="Wpisz adres lub wyszukaj w Google..." data-i18n-placeholder="url_placeholder" spellcheck="false"/>
+      <span class="url-zoom-divider"></span>
+      <button id="zoom-btn" title="Powiększenie strony" data-i18n-title="zoom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <line id="zoom-icon-h" x1="8" y1="11" x2="14" y2="11"/>
+          <line id="zoom-icon-v" x1="11" y1="8" x2="11" y2="14"/>
+        </svg>
+      </button>
+      <!-- Tłumacz — widoczny gdy strona wykryta jako nie-polska -->
+      <span class="url-zoom-divider" id="translate-divider" style="display:none"></span>
+      <button id="translate-btn" title="Tłumacz stronę" data-i18n-title="translate_page">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/>
+          <path d="M2 5h12"/><path d="M7 2h1"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+      </button>
+      <!-- Send to Devices / QR Code -->
+      <span class="url-zoom-divider" id="qr-divider"></span>
+      <button id="qr-btn" title="Wyślij na urządzenie (QR)" data-i18n-title="send_to_device">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+          <line x1="7" y1="5" x2="7" y2="5.01"/><line x1="17" y1="5" x2="17" y2="5.01"/>
+          <line x1="7" y1="17" x2="17" y2="17"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Zoom popup -->
+    <div id="zoom-popup">
+      <button class="zoom-ctrl-btn" id="zoom-out-btn" title="Pomniejsz" data-i18n-title="zoom_out">−</button>
+      <span id="zoom-value-display">100%</span>
+      <button class="zoom-ctrl-btn" id="zoom-in-btn" title="Powiększ" data-i18n-title="zoom_in">+</button>
+      <div class="zoom-pipe"></div>
+      <button id="zoom-reset-btn" title="Resetuj powiększenie" data-i18n-title="zoom_reset" data-i18n="reset">Resetuj</button>
+    </div>
+
+    <!-- Popup tłumacza -->
+    <div id="translate-popup">
+      <div class="translate-popup-label" id="translate-popup-label" data-i18n="translate_notice">Ta strona jest w innym języku</div>
+      <button class="translate-popup-action" id="translate-do-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/>
+          <path d="M2 5h12"/><path d="M7 2h1"/>
+          <path d="M22 22l-5-10-5 10"/>
+          <path d="M14 18h6"/>
+        </svg>
+        <span data-i18n="translate_to">Przetłumacz na Polski</span>
+      </button>
+      <button class="translate-popup-action" id="translate-orig-btn" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        <span data-i18n="show_original">Pokaż oryginalny język</span>
+      </button>
+    </div>
+
+    <!-- QR Send to Devices popup -->
+    <div id="qr-popup">
+      <div class="qr-popup-header">
+        <span class="qr-popup-title" data-i18n="send_to_device">Wyślij na urządzenie</span>
+        <button class="qr-close-btn" id="qr-popup-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div id="qr-code-wrap">
+        <div id="qr-loading" class="qr-loading">
+          <svg class="qr-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+            <path d="M12 2a10 10 0 0 1 10 10"/>
+          </svg>
+        </div>
+        <img id="qr-code-img" alt="QR Code" style="display:none" />
+      </div>
+      <div class="qr-url-text" id="qr-url-text"></div>
+    </div>
+
+    <!-- NOWE: przycisk pobierania — pojawia się animacją gdy coś się pobiera -->
+    <button id="dl-toggle-btn" title="Pobieranie" data-i18n-title="downloads">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span class="dl-badge"></span>
+    </button>
+
+    <!-- Autofill dot-button -->
+    <div id="pw-dot-wrap">
+      <button id="pw-dot-btn" title="Zapisane hasło" data-i18n-title="pw_dot_btn_title">
+        <!-- Klucz -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+        </svg>
+        <span id="pw-dot-badge">*</span>
+      </button>
+    </div>
+    <div id="pw-dot-popup">
+      <div id="pw-dot-popup-stripe"></div>
+      <div id="pw-dot-popup-inner">
+        <!-- Nagłówek: ikona + tytuł -->
+        <div id="pw-dot-popup-title-row">
+          <div id="pw-dot-popup-title-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          </div>
+          <div id="pw-dot-popup-title-texts">
+            <div id="pw-dot-popup-title-main" data-i18n="pw_autofill_title_main">Na tej stronie znajduje się</div>
+            <div id="pw-dot-popup-title-sub" data-i18n="pw_autofill_title_sub">zapisane hasło</div>
+          </div>
+        </div>
+        <!-- Karta konta -->
+        <div id="pw-dot-popup-card">
+          <img id="pw-dot-popup-favicon" src="" alt="">
+          <div id="pw-dot-popup-info">
+            <div id="pw-dot-popup-site"></div>
+            <div id="pw-dot-popup-user"></div>
+          </div>
+        </div>
+        <!-- Przycisk wypełnij -->
+        <button id="pw-dot-popup-fill" data-i18n="pw_autofill_fill">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Wypełnij
+        </button>
+      </div>
+    </div>
+
+    <button id="adblock-btn" class="nav-btn active" title="Adblock" data-i18n-title="adblock_btn_title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span id="adblock-count"></span>
+    </button>
+
+    <div id="adblock-popup">
+      <div class="adb-header">
+        <div class="adb-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span data-i18n="adblock_title">Nitrix Adblock</span>
+        </div>
+      </div>
+      <div class="adb-toggle-row">
+        <div>
+          <div class="adb-toggle-label" data-i18n="adblock_toggle_label">Blokowanie reklam</div>
+          <div class="adb-toggle-sub" id="adb-toggle-sub" data-i18n="adblock_toggle_on">Aktywne na tej stronie</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="adblock-toggle" checked>
+          <span class="toggle-track"></span>
+          <span class="toggle-thumb"></span>
+        </label>
+      </div>
+      <div class="adb-stat-row">
+        <div class="adb-stat-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+        </div>
+        <div>
+          <div class="adb-stat-num" id="adb-stat-total">0</div>
+          <div class="adb-stat-lbl" data-i18n="adblock_blocked_total">Zablokowano na tej stronie</div>
+        </div>
+      </div>
+      <button class="adb-advanced-btn" id="adb-advanced-toggle-btn">
+        <span data-i18n="adblock_advanced">Zaawansowane</span>
+        <svg id="adb-advanced-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div id="adblock-advanced">
+        <div class="adb-adv-header">
+          <span class="adb-adv-title" data-i18n="adblock_blocked_list">Zablokowane zasoby</span>
+          <button class="adb-adv-clear" id="adb-adv-clear-btn" data-i18n="adblock_clear">Wyczyść</button>
+        </div>
+        <div class="adb-list" id="adb-list"></div>
+        <!-- Custom blocked elements (element picker) -->
+        <div class="adb-custom-section" id="adb-custom-section" style="display:none">
+          <div class="adb-adv-header">
+            <span class="adb-adv-title" data-i18n="adblock_custom_list">Twoje własne zablokowane elementy</span>
+          </div>
+          <div class="adb-list" id="adb-custom-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Element picker toast -->
+    <div id="picker-toast">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8ab4f8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+      <span id="picker-toast-msg" data-i18n="picker_hint">Kliknij element który chcesz usunąć</span>
+      <button id="picker-toast-cancel" data-i18n="picker_cancel">Anuluj (Esc)</button>
+    </div>
+
+        <button id="menu-btn" title="Menu" data-i18n-title="menu">
+      <svg viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Sugestie paska URL -->
+  <div id="url-suggestions"></div>
+
+  <!-- NOWE: Panel pobierania -->
+  <div id="dl-panel">
+    <div class="dl-panel-header">
+      <span class="dl-panel-title" data-i18n="downloads">Pobieranie</span>
+      <button id="dl-clear-btn" data-i18n="dl_clear_done">Wyczyść ukończone</button>
+    </div>
+    <!-- wpisy tworzone dynamicznie -->
+    <div class="dl-panel-footer">
+      <button id="dl-open-history-btn">
+        <span data-i18n="dl_open_history">Otwórz historię pobierania</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Dropdown -->
+  <div id="dropdown">
+    <button class="dd-btn" id="dd-history">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span data-i18n="history">Historia</span>
+    </button>
+    <button class="dd-btn" id="dd-settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span data-i18n="settings">Ustawienia</span>
+    </button>
+    <button class="dd-btn" id="dd-whatsnew">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/>
+        <path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/>
+      </svg>
+      <span data-i18n="whats_new">Co Nowego?</span>
+    </button>
+    <button class="dd-btn" id="dd-private">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+      <span data-i18n="private_mode">Tryb prywatny</span>
+    </button>
+    <button class="dd-btn" id="dd-devtools">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+      <span data-i18n="devtools">Narzędzia deweloperskie</span>
+    </button>
+    <button class="dd-btn" id="dd-passwords">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span data-i18n="password_manager">Menedżer haseł</span>
+    </button>
+    <div class="dd-separator"></div>
+    <button class="dd-btn dd-btn-destroyer" id="dd-destroyer">
+      <svg class="destroyer-skull-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 22v-3H8a2 2 0 0 1-2-2v-2.5A7 7 0 1 1 18 14.5V17a2 2 0 0 1-2 2h-1v3"/>
+        <path d="M9 22h6"/>
+        <path d="M10 19v1.5M12 19v1.5M14 19v1.5"/>
+        <path d="M10 19h4"/>
+        <ellipse cx="9.5" cy="12" rx="1.4" ry="1.6" fill="currentColor" stroke="none"/>
+        <ellipse cx="14.5" cy="12" rx="1.4" ry="1.6" fill="currentColor" stroke="none"/>
+        <path d="M11 14.8c0-.6.5-1 1-1s1 .4 1 1" stroke-width="1.2"/>
+      </svg>
+      <span data-i18n="destroyer">Niszczyciel Nitrix</span>
+    </button>
+
+    <!-- Wskaźnik trybu prywatnego — widoczny tylko w tym trybie -->
+    <div id="dd-private-indicator">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 8v4"/><path d="M12 16h.01"/>
+      </svg>
+      <span data-i18n="browsing_private">Przeglądasz w trybie prywatnym</span>
+    </div>
+  </div>
+
+  <!-- ══ Menedżer haseł — overlay ═══════════════════════════════════ -->
+  <div id="whatsnew-overlay">
+    <div id="whatsnew-panel">
+      <div id="whatsnew-header">
+        <div class="whatsnew-title-wrap">
+          <img class="whatsnew-logo" src="icon.ico" alt="Nitrix">
+          <div>
+            <div class="whatsnew-title" data-i18n="whats_new">Co Nowego?</div>
+            <div class="whatsnew-subtitle" data-i18n="whats_new_subtitle">Wybierz wersję, żeby zobaczyć zmiany</div>
+          </div>
+        </div>
+        <button class="icon-btn" id="whatsnew-close" title="Zamknij" data-i18n-title="close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <iframe id="whatsnew-frame" data-src="strona.html" title="Co Nowego?" loading="lazy"></iframe>
+    </div>
+  </div>
+
+  <div id="passwords-overlay">
+    <div id="passwords-panel">
+
+      <!-- Sidebar -->
+      <div id="pw-sidebar">
+        <div id="pw-sidebar-title" data-i18n="password_manager">Menedżer haseł</div>
+        <div class="pw-sidebar-item active" data-pw-section="passwords">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span data-i18n="pw_sidebar_passwords">Hasła</span>
+        </div>
+        <div class="pw-sidebar-item" data-pw-section="pin">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <span data-i18n="pw_sidebar_pin">PIN</span>
+        </div>
+      </div>
+
+      <!-- Treść -->
+      <div id="pw-content">
+        <div id="pw-content-header">
+          <div id="pw-content-header-title" data-i18n="pw_sidebar_passwords">Hasła</div>
+          <button id="passwords-close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sekcja: Hasła -->
+        <div id="pw-section-passwords">
+          <div id="passwords-toolbar">
+            <button id="passwords-add-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              <span data-i18n="pw_add_page">Dodaj stronę</span>
+            </button>
+            <input id="passwords-search" type="text" placeholder="Szukaj…" autocomplete="off" spellcheck="false">
+            <button id="passwords-delete-all-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              <span data-i18n="pw_delete_all">Usuń wszystkie</span>
+            </button>
+          </div>
+          <div id="passwords-list"></div>
+        </div>
+
+        <!-- Sekcja: PIN -->
+        <div id="pw-section-pin">
+          <div id="pw-pin-set-wrap">
+            <div class="pw-pin-section-title" data-i18n="pw_pin_title">Ustaw PIN dostępu</div>
+            <div class="pw-pin-warning">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <span data-i18n="pw_pin_warning"><strong data-i18n="pw_pin_warning_bold">Uwaga:</strong> PIN nie może być później zmieniony. Zapamiętaj go — jest wymagany do przeglądania i kopiowania haseł.</span>
+            </div>
+            <div class="pw-pin-field">
+              <label data-i18n="pw_pin_label">PIN (min. 4 cyfry)</label>
+              <input class="pw-pin-input" id="pw-pin-input1" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password">
+            </div>
+            <div class="pw-pin-field">
+              <label data-i18n="pw_pin_confirm_label">Potwierdź PIN</label>
+              <input class="pw-pin-input" id="pw-pin-input2" type="password" inputmode="numeric" maxlength="12" autocomplete="new-password">
+            </div>
+            <div id="pw-pin-error"></div>
+            <button id="pw-pin-save-btn" data-i18n="pw_pin_set_btn">Ustaw PIN</button>
+          </div>
+          <div id="pw-pin-set-done">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span data-i18n="pw_pin_done">PIN został ustawiony. Będzie wymagany przy kopiowaniu i edytowaniu haseł.</span>
+          </div>
+          <div class="pw-pin-skip-row" id="pw-pin-skip-row">
+            <div class="setting-row-inline" style="padding:14px 0 0">
+              <div class="setting-row-inline-text">
+                <div class="setting-label" data-i18n="pw_pin_skip_label">Nie pytaj o PIN przy uzupełnianiu hasła</div>
+                <div class="setting-desc" data-i18n="pw_pin_skip_desc">Hasła będą uzupełniane bez weryfikacji kodem PIN</div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="pw-pin-skip-chk">
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row-inline" id="pw-pin-reset-row" style="padding:14px 0 0; border-bottom:none">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" style="color:#f87171" data-i18n="pw_pin_reset_label">Zresetuj PIN</div>
+              <div class="setting-desc" data-i18n="pw_pin_reset_desc">Usuwa PIN oraz wszystkie zapisane hasła — operacja nieodwracalna</div>
+            </div>
+            <button id="pw-pin-reset-btn" style="
+              flex-shrink:0; border:1.5px solid #f87171; background:transparent;
+              color:#f87171; border-radius:8px; padding:6px 14px;
+              font-size:12.5px; font-weight:600; cursor:pointer;
+              transition:background .15s, color .15s;
+            " data-i18n="pw_pin_reset_btn">Resetuj PIN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Menedżer haseł — formularz dodaj/edytuj ═══════════════════ -->
+  <div id="pw-form-overlay">
+    <div id="pw-form-panel">
+      <div id="pw-form-title" data-i18n="pw_add_title">Dodaj hasło</div>
+      <div class="pw-field">
+        <label data-i18n="pw_label_site">Strona</label>
+        <input id="pw-field-site" type="text" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="pw-field">
+        <label data-i18n="pw_label_user">Nazwa użytkownika / e-mail</label>
+        <input id="pw-field-user" type="text" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="pw-field">
+        <label data-i18n="pw_label_pass">Hasło</label>
+        <div class="pw-field-pw">
+          <input id="pw-field-pass" type="password" autocomplete="new-password">
+          <button class="pw-toggle-vis" id="pw-toggle-vis" tabindex="-1" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="pw-form-btns">
+        <button class="pw-form-btn cancel" id="pw-form-cancel" data-i18n="cancel">Anuluj</button>
+        <button class="pw-form-btn save" id="pw-form-save" data-i18n="pw_save">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Menedżer haseł — weryfikacja PIN ══════════════════════════ -->
+  <div id="pw-pin-verify-overlay">
+    <div id="pw-pin-verify-panel">
+      <svg class="lock-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <div id="pw-pin-verify-title" data-i18n="pw_pin_verify_title">Podaj PIN</div>
+      <input id="pw-pin-verify-input" type="password" inputmode="numeric" maxlength="12" autocomplete="off">
+      <div id="pw-pin-verify-error"></div>
+      <button id="pw-pin-verify-btn" data-i18n="pw_pin_verify_btn">Potwierdź</button>
+    </div>
+  </div>
+
+  <div id="pw-copy-toast" data-i18n="pw_copied">Hasło skopiowane!</div>
+
+  <!-- ══ Niszczyciel Nitrix — overlay ══════════════════════════════════ -->
+  <div id="destroyer-overlay">
+    <div id="destroyer-modal">
+      <div class="destroyer-header">
+        <div class="destroyer-title-row">
+          <svg class="destroyer-icon-big-svg" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 22v-3H8a2 2 0 0 1-2-2v-2.5A7 7 0 1 1 18 14.5V17a2 2 0 0 1-2 2h-1v3"/>
+            <path d="M9 22h6"/>
+            <path d="M10 19v1.5M12 19v1.5M14 19v1.5"/>
+            <path d="M10 19h4"/>
+            <ellipse cx="9.5" cy="12" rx="1.55" ry="1.75" fill="#f87171" stroke="none"/>
+            <ellipse cx="14.5" cy="12" rx="1.55" ry="1.75" fill="#f87171" stroke="none"/>
+            <path d="M11 14.8c0-.65.45-1.1 1-1.1s1 .45 1 1.1" stroke-width="1.2"/>
+          </svg>
+          <div>
+            <div class="destroyer-title" data-i18n="destroyer">Niszczyciel Nitrix</div>
+            <div class="destroyer-subtitle" data-i18n="destroyer_subtitle">Wybierz co chcesz trwale usunąć</div>
+          </div>
+        </div>
+        <button class="icon-btn" id="destroyer-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="destroyer-body">
+        <label class="destroyer-item" id="dst-item-history">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-history" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="browsing_history">Historia przeglądania</div>
+              <div class="dst-item-desc" data-i18n="dst_history_desc">Wszystkie odwiedzone adresy i tytuły stron</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-dlhistory">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-dlhistory" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_dlhistory">Historia pobierania</div>
+              <div class="dst-item-desc" data-i18n="dst_dlhistory_desc">Lista wszystkich pobranych plików</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-bookmarks">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-bookmarks" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_bookmarks">Zakładki</div>
+              <div class="dst-item-desc" data-i18n="dst_bookmarks_desc">Wszystkie zapisane zakładki</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-cookies">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-cookies" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_cookies">Pliki cookie i dane sesji</div>
+              <div class="dst-item-desc" data-i18n="dst_cookies_desc">Dane logowania, preferencje stron, sesje</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-cache">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-cache" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_cache">Pamięć podręczna (cache)</div>
+              <div class="dst-item-desc" data-i18n="dst_cache_desc">Obrazy, skrypty i inne zasoby stron</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-storage">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-storage" checked>
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_storage">Dane witryn i zgody</div>
+              <div class="dst-item-desc" data-i18n="dst_storage_desc">Dane witryn oraz wszystkie zapamiętane zgody i blokady</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-passwords">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-passwords">
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_passwords">Zapisane hasła</div>
+              <div class="dst-item-desc" data-i18n="dst_passwords_desc">Wszystkie dane logowania z menedżera haseł</div>
+            </div>
+          </div>
+        </label>
+
+        <label class="destroyer-item" id="dst-item-pin">
+          <div class="dst-check-wrap">
+            <input type="checkbox" id="dst-pin">
+            <span class="dst-checkmark"></span>
+          </div>
+          <div class="dst-item-info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="dst-item-icon"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>
+              <div class="dst-item-name" data-i18n="dst_pin">PIN menedżera haseł</div>
+              <div class="dst-item-desc" data-i18n="dst_pin_desc">Kod PIN chroniący dostęp do menedżera haseł</div>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <div class="destroyer-footer">
+        <div class="destroyer-select-all">
+          <button id="dst-select-all" class="dst-toggle-btn" data-i18n="select_all">Zaznacz wszystko</button>
+          <button id="dst-deselect-all" class="dst-toggle-btn" data-i18n="deselect_all">Odznacz wszystko</button>
+        </div>
+        <button id="dst-delete-btn" class="dst-delete-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          <span data-i18n="delete">USUŃ</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ Niszczyciel — dialog potwierdzenia ═══════════════════════════ -->
+  <div id="destroyer-confirm-overlay">
+    <div id="destroyer-confirm-modal">
+      <div class="dconf-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <circle cx="12" cy="17" r="0.8" fill="#ef4444" stroke="none"/>
+        </svg>
+      </div>
+      <div class="dconf-title" data-i18n="confirm_title">Czy na pewno chcesz usunąć?</div>
+      <div class="dconf-desc">
+        <strong data-i18n="irreversible">Tej operacji nie można cofnąć.</strong><br>
+        <span data-i18n="destroy_selected_desc">Wybrane dane zostaną trwale usunięte z przeglądarki Nitrix.</span>
+      </div>
+      <div class="dconf-summary" id="dconf-summary"></div>
+      <div class="dconf-btns">
+        <button id="dconf-cancel" class="dconf-btn-cancel" data-i18n="cancel">Anuluj</button>
+        <button id="dconf-confirm" class="dconf-btn-confirm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          <span data-i18n="confirm_delete">Tak, usuń na zawsze</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel ustawień -->
+  <div id="settings-overlay">
+    <div id="settings-panel">
+      <div id="settings-sidebar">
+        <div class="settings-title" data-i18n="settings">Ustawienia</div>
+        <div class="sidebar-item active" data-section="wyglad">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <span data-i18n="appearance">Wygląd</span>
+        </div>
+        <div class="sidebar-item" data-section="wyszukiwarka">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <span data-i18n="search_engine">Wyszukiwarka</span>
+        </div>
+        <div class="sidebar-item" data-section="startowa">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <span data-i18n="homepage">Strona startowa</span>
+        </div>
+        <div class="sidebar-item" data-section="jezyk">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <span data-i18n="settings_language">Język</span>
+        </div>
+        <div class="sidebar-item" data-section="adblock">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Adblock</span>
+        </div>
+        <div class="sidebar-item" data-section="bezpieczenstwo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+          <span data-i18n="security_settings">Bezpieczeństwo</span>
+        </div>
+        <div class="sidebar-item" data-section="sendtodevice">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+            <line x1="7" y1="5" x2="7" y2="5.01"/><line x1="17" y1="5" x2="17" y2="5.01"/>
+            <line x1="7" y1="17" x2="17" y2="17"/>
+          </svg>
+          <span data-i18n="send_to_device_settings">Prześlij na urządzenie</span>
+        </div>
+        <div class="sidebar-item" data-section="import">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span data-i18n="import_data">Import danych</span>
+        </div>
+        <div class="sidebar-item" data-section="domyslna">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+          <span data-i18n="default_browser_settings">Domyślna przeglądarka</span>
+        </div>
+      </div>
+      <div id="settings-content">
+        <div class="settings-section" id="section-bezpieczenstwo">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="security_settings">Bezpieczeństwo</div>
+            <button class="icon-btn" id="settings-close-security" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="block_local_ip">Zablokuj stronom wykrywanie lokalnego adresu IP</div>
+              <div class="setting-desc" data-i18n="block_local_ip_desc">Ukrywa lokalny adres IP przed stronami korzystającymi z WebRTC.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-block-local-ip" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+        </div>
+
+        <div class="settings-section active" id="section-wyglad">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="appearance">Wygląd</div>
+            <button class="icon-btn" id="settings-close" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label" data-i18n="theme">Motyw</div>
+            <div class="setting-desc" data-i18n="theme_desc">Zmienia wygląd paska nawigacji i interfejsu przeglądarki</div>
+          </div>
+          <div class="theme-options">
+            <div class="theme-wrap selected" id="wrap-dark" data-theme="dark">
+              <div class="theme-card dark-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                </div>
+              </div>
+              <div class="theme-card-label" data-i18n="theme_dark">Ciemny</div>
+            </div>
+            <div class="theme-wrap" id="wrap-light" data-theme="light">
+              <div class="theme-card light-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                </div>
+              </div>
+              <div class="theme-card-label" data-i18n="theme_light">Jasny</div>
+            </div>
+            <div class="theme-wrap" id="wrap-transparent" data-theme="transparent">
+              <div class="theme-card transparent-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg></div>
+              </div>
+              <div class="theme-card-label" data-i18n="theme_transparent">Backdrop Blur</div>
+            </div>
+            <div class="theme-wrap" id="wrap-private" data-theme="private">
+              <div class="theme-card private-card">
+                <div class="tc-bar"><div class="tc-dot"></div><div class="tc-dot"></div><div class="tc-dot"></div></div>
+                <div class="tc-body"></div>
+                <div class="tc-check">
+                  <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 6 5 9 10 3"/></svg>
+                </div>
+              </div>
+              <div class="theme-card-label" data-i18n="theme_private">Prywatny</div>
+            </div>
+          </div>
+
+          <p id="theme-glass-note" class="setting-desc theme-glass-note" hidden>
+            <span data-i18n="theme_transparent_note">Półprzezroczyste paski i panele z efektem Backdrop Blur dopasowanym do tła.</span>
+            <span id="theme-glass-restart" data-i18n="theme_transparent_restart" hidden> Aby zobaczyć pulpit przez okno, uruchom Nitrix ponownie.</span>
+          </p>
+          <div id="theme-blur-control" class="setting-row-inline theme-blur-control" hidden>
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="theme_blur">Siła Backdrop Blur w panelach i popupach</div>
+              <div class="setting-desc" data-i18n="theme_blur_desc">Większa wartość oznacza mocniejsze rozmycie tła. Panele zachowują neutralną, lekko przezroczystą warstwę.</div>
+            </div>
+            <div class="theme-blur-input">
+              <input id="theme-blur-range" type="range" min="0" max="100" step="1" value="75" aria-valuemin="0" aria-valuemax="100" aria-valuenow="75">
+              <output id="theme-blur-value">75%</output>
+            </div>
+          </div>
+          <div id="theme-top-controls" hidden>
+            <div class="setting-row-inline">
+              <div class="setting-row-inline-text">
+                <label class="setting-label" for="theme-top-opacity" data-i18n="aero_top_opacity">Siła Backdrop Blur górnych pasków</label>
+                <div class="setting-desc" data-i18n="aero_top_opacity_desc">Większa wartość oznacza mocniejsze rozmycie tła za paskiem kart, adresu i zakładek. Kolor dopasowuje się do tła.</div>
+              </div>
+              <div class="theme-blur-input"><input id="theme-top-opacity" type="range" min="0" max="100" step="1" value="75"><output id="theme-top-value" for="theme-top-opacity">75%</output></div>
+            </div>
+          </div>
+          <div id="backdrop-readability" hidden>
+            <label class="setting-row-inline"><span class="setting-row-inline-text"><span class="setting-label" data-i18n="backdrop_contrast">Automatyczny kolor tekstu paneli i popupów</span><span class="setting-desc" data-i18n="backdrop_contrast_desc">Dobiera jasne lub ciemne napisy do tła strony pod panelem.</span></span><span class="toggle-switch"><input id="backdrop-contrast" type="checkbox"><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+          </div>
+          <div id="theme-aero-scope-row" hidden>
+            <div id="aero-scope-label" class="setting-label" data-i18n="aero_scope">W których miejscach przeglądarki Nitrix ma działać motyw Backdrop Blur?</div>
+            <details id="select-aero-scope" class="aero-area-picker">
+              <summary><span data-i18n="aero_choose_areas">Wybierz obszary Backdrop Blur</span><span id="aero-area-count">5 / 5</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+              <div class="aero-area-list" role="group" aria-labelledby="aero-scope-label">
+                <label class="aero-area-option"><span data-i18n="aero_area_cards">Karty</span><span class="toggle-switch"><input type="checkbox" data-aero-area="cards" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+                <label class="aero-area-option"><span data-i18n="aero_area_tabs">Pasek kart</span><span class="toggle-switch"><input type="checkbox" data-aero-area="tabs" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+                <label class="aero-area-option"><span data-i18n="aero_area_bookmarks">Pasek zakładek</span><span class="toggle-switch"><input type="checkbox" data-aero-area="bookmarks" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+                <label class="aero-area-option"><span data-i18n="aero_area_navigation">Pasek adresu i przyciski</span><span class="toggle-switch"><input type="checkbox" data-aero-area="navigation" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+                <label class="aero-area-option"><span data-i18n="aero_area_ui">Ustawienia, panele i popupy</span><span class="toggle-switch"><input type="checkbox" data-aero-area="ui" checked><span class="toggle-track"></span><span class="toggle-thumb"></span></span></label>
+              </div>
+            </details>
+            <p class="setting-desc" data-i18n="aero_scope_help">Zaznacz dowolne obszary interfejsu. Motyw Backdrop Blur nie zmienia wyglądu stron internetowych.</p>
+          </div>
+          <!-- Opcja: Rozszerzaj pasek wyszukiwania -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="expand_bar">Rozszerzaj pasek wyszukiwania</div>
+              <div class="setting-desc" data-i18n="expand_bar_desc">Pasek URL zajmuje całą dostępną szerokość paska nawigacji</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-expand-bar" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Opcja: Pasek zakładek -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="bkbar">Pokaż pasek zakładek</div>
+              <div class="setting-desc" data-i18n="bkbar_desc">Kiedy pasek zakładek ma być widoczny</div>
+            </div>
+            <div id="select-bkbar-mode" class="seg-control">
+              <button class="seg-btn active" data-value="always" data-i18n="always">Zawsze</button>
+              <button class="seg-btn" data-value="newtab" data-i18n="new_tab">Nowa karta</button>
+              <button class="seg-btn" data-value="never" data-i18n="never">Nigdy</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sekcja: Wyszukiwarka -->
+        <div class="settings-section" id="section-wyszukiwarka">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="search_engine">Wyszukiwarka</div>
+            <button class="icon-btn" id="settings-close-se" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label" data-i18n="default_engine">Domyślna wyszukiwarka</div>
+            <div class="setting-desc" data-i18n="default_engine_desc">Używana gdy wpiszesz zapytanie w pasku adresu</div>
+          </div>
+          <div class="search-engine-list">
+            <div class="se-option selected" data-engine="google">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">Google</div>
+                <div class="se-url">google.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-engine="duckduckgo">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=duckduckgo.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">DuckDuckGo</div>
+                <div class="se-url">duckduckgo.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-engine="bing">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=bing.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">Bing</div>
+                <div class="se-url">bing.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-engine="brave">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=search.brave.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">Brave Search</div>
+                <div class="se-url">search.brave.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+          </div>
+
+          <!-- Opcja: Sugestie historii -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="hist_suggestions">Pokazuj sugestie na podstawie historii przeglądania</div>
+              <div class="setting-desc" data-i18n="hist_suggestions_desc">Podczas wpisywania w pasku adresu wyświetlaj podpowiedzi z odwiedzonych stron</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-history-suggestions" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Opcja: Sugestie zakładek -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="bk_suggestions">Pokazuj sugestie na podstawie zakładek</div>
+              <div class="setting-desc" data-i18n="bk_suggestions_desc">Podczas wpisywania w pasku adresu wyświetlaj pasujące zakładki</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-bookmark-suggestions" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Opcja: Sugestie w trybie prywatnym -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="priv_suggestions">Sugestie w trybie prywatnym</div>
+              <div class="setting-desc" data-i18n="priv_suggestions_desc">Co wyświetlać w pasku adresu podczas przeglądania prywatnego</div>
+            </div>
+            <div id="select-private-suggestions" class="seg-control">
+              <button class="seg-btn active" data-value="all" data-i18n="all">Wszystko</button>
+              <button class="seg-btn" data-value="history" data-i18n="history_only">Tylko historia</button>
+              <button class="seg-btn" data-value="bookmarks" data-i18n="bookmarks_only">Tylko zakładki</button>
+              <button class="seg-btn" data-value="none" data-i18n="none">Nic</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sekcja: Strona startowa -->
+        <div class="settings-section" id="section-startowa">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="homepage">Strona startowa</div>
+            <button class="icon-btn" id="settings-close-home" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label" data-i18n="default_homepage">Domyślna strona startowa</div>
+            <div class="setting-desc" data-i18n="default_homepage_desc">Otwierana po kliknięciu przycisku domku i przy nowej karcie</div>
+          </div>
+          <div class="search-engine-list">
+            <div class="se-option selected" data-homepage="google">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">Google</div>
+                <div class="se-url">google.pl</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-homepage="duckduckgo">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=duckduckgo.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">DuckDuckGo</div>
+                <div class="se-url">duckduckgo.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-homepage="bing">
+              <div class="se-logo"><img src="https://www.google.com/s2/favicons?domain=bing.com&sz=64" width="28" height="28" style="border-radius:6px"></div>
+              <div class="se-info">
+                <div class="se-name">Bing</div>
+                <div class="se-url">bing.com</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+            <div class="se-option" data-homepage="custom">
+              <div class="se-logo" id="homepage-custom-logo" style="font-size:20px;display:flex;align-items:center;justify-content:center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+              </div>
+              <div class="se-info">
+                <div class="se-name" data-i18n="custom">Niestandardowa</div>
+                <div class="se-url" id="homepage-custom-preview" data-i18n="enter_custom_url">Wpisz własny adres URL</div>
+              </div>
+              <div class="se-check">
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1.5 5 4 7.5 8.5 2.5"/></svg>
+              </div>
+            </div>
+          </div>
+          <!-- Input dla niestandardowego URL -->
+          <div class="homepage-custom-wrap" id="homepage-custom-wrap">
+            <input class="homepage-custom-input" id="homepage-custom-input" type="text" placeholder="https://przykład.pl" data-i18n-placeholder="custom_url_placeholder" spellcheck="false"/>
+            <button class="homepage-custom-save" id="homepage-custom-save" data-i18n="save">Zapisz</button>
+          </div>
+
+          <!-- Startup behavior -->
+          <hr class="startup-section-divider">
+          <div class="startup-behavior-label" data-i18n="startup_on_launch">Po uruchomieniu przeglądarki</div>
+
+          <div class="startup-option selected" data-startup="homepage">
+            <div class="startup-option-radio"><div class="startup-option-radio-dot"></div></div>
+            <div class="startup-option-text" data-i18n="startup_opt_homepage">Otwórz stronę startową przeglądarki</div>
+          </div>
+          <div class="startup-option" data-startup="last">
+            <div class="startup-option-radio"><div class="startup-option-radio-dot"></div></div>
+            <div class="startup-option-text" data-i18n="startup_opt_last">Otwórz ostatnio otwartą stronę</div>
+          </div>
+          <div class="startup-option" data-startup="custom">
+            <div class="startup-option-radio"><div class="startup-option-radio-dot"></div></div>
+            <div class="startup-option-text" data-i18n="startup_opt_custom">Otwórz wybraną stronę</div>
+          </div>
+          <div class="startup-custom-wrap" id="startup-custom-wrap">
+            <input class="startup-custom-input" id="startup-custom-input" type="text" placeholder="https://przykład.pl" data-i18n-placeholder="custom_url_placeholder" spellcheck="false"/>
+            <button class="startup-custom-save" id="startup-custom-save" data-i18n="save">Zapisz</button>
+          </div>
+          <div class="startup-option" data-startup="bookmarks">
+            <div class="startup-option-radio"><div class="startup-option-radio-dot"></div></div>
+            <div class="startup-option-text" data-i18n="startup_opt_bookmarks">Otwórz wybrane zakładki</div>
+          </div>
+          <div class="startup-bookmarks-trigger" id="startup-bookmarks-trigger">
+            <span class="sbk-count-badge" id="sbk-count-badge"><strong>0</strong> <span id="sbk-badge-label" data-i18n="startup_bk_selected">zakładek wybranych</span></span>
+            <button class="sbk-open-btn" id="sbk-open-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+              <span data-i18n="startup_bk_choose">Wybierz zakładki</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sekcja: Język -->
+        <div class="settings-section" id="section-jezyk">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="settings_language">Język</div>
+            <button class="icon-btn" id="settings-close-lang" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div class="setting-row">
+            <div class="setting-label" data-i18n="lang_label">Język interfejsu</div>
+            <div class="setting-desc" data-i18n="lang_desc">Zmienia język całej przeglądarki Nitrix</div>
+          </div>
+          <div class="lang-option-list">
+            <label class="lang-option" id="lang-opt-pl">
+              <div class="lang-flag">
+                <svg viewBox="0 0 20 14" width="32" height="22" style="border-radius:3px;display:block">
+                  <rect width="20" height="7" fill="#fff"/>
+                  <rect y="7" width="20" height="7" fill="#dc143c"/>
+                </svg>
+                <span class="lang-flag-code">PL</span>
+              </div>
+              <div class="lang-info">
+                <div class="lang-name" data-i18n="lang_name_pl">Polski</div>
+                <div class="lang-native">Polish</div>
+              </div>
+              <div class="lang-radio-wrap">
+                <input type="radio" name="nitrix-lang" value="pl" checked>
+                <span class="lang-radio-dot"></span>
+              </div>
+            </label>
+            <label class="lang-option" id="lang-opt-en">
+              <div class="lang-flag">
+                <svg viewBox="0 0 30 20" width="32" height="22" style="border-radius:3px;display:block">
+                  <!-- Union Jack -->
+                  <rect width="30" height="20" fill="#012169"/>
+                  <path d="M0,0 L30,20 M30,0 L0,20" stroke="#fff" stroke-width="4"/>
+                  <path d="M0,0 L30,20 M30,0 L0,20" stroke="#C8102E" stroke-width="2.5"/>
+                  <path d="M15,0 V20 M0,10 H30" stroke="#fff" stroke-width="6"/>
+                  <path d="M15,0 V20 M0,10 H30" stroke="#C8102E" stroke-width="4"/>
+                </svg>
+                <span class="lang-flag-code">GB</span>
+              </div>
+              <div class="lang-info">
+                <div class="lang-name" data-i18n="lang_name_en">Angielski</div>
+                <div class="lang-native">English</div>
+              </div>
+              <div class="lang-radio-wrap">
+                <input type="radio" name="nitrix-lang" value="en">
+                <span class="lang-radio-dot"></span>
+              </div>
+            </label>
+          </div>
+          <div class="lang-restart-note" id="lang-restart-note" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span data-i18n="lang_applied">Język został zmieniony.</span>
+          </div>
+        </div>
+
+
+        <!-- Sekcja: Adblock -->
+        <div class="settings-section" id="section-adblock">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="adb_settings_title">Adblock</div>
+            <button class="icon-btn" id="settings-close-adblock" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Główny włącznik -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="adb_enabled_label">Włącz Adblock</div>
+              <div class="setting-desc" data-i18n="adb_enabled_desc">Globalne blokowanie reklam i trackerów we wszystkich kartach</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-enabled" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Baner "wyłączony" -->
+          <div id="adb-disabled-banner">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span data-i18n="adb_disabled_info">Włącz Adblock powyżej, aby zmienić te ustawienia</span>
+          </div>
+
+          <!-- Reszta ustawień — przyciemniana gdy wyłączony -->
+          <div id="adb-settings-body">
+          <div class="setting-row" style="padding:14px 0 6px;border-bottom:none">
+            <div class="setting-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)" data-i18n="adb_filter_lists">Listy filtrów</div>
+          </div>
+
+          <!-- Wbudowane listy Nitrix -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="adb_nitrix_label">Wbudowane listy Nitrix</div>
+              <div class="setting-desc" data-i18n="adb_nitrix_desc">Własne listy Nitrix — blokowanie reklam, trackerów i reklam YouTube (~200 reguł domen)</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-nitrix" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- EasyList -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label">
+                <span data-i18n="adb_easylist_label">EasyList</span>
+                <span id="adb-el-badge" style="display:none;margin-left:7px;font-size:11px;font-weight:400;color:var(--text-dim);background:var(--surface);padding:1px 7px;border-radius:10px;border:1px solid var(--border)"></span>
+              </div>
+              <div class="setting-desc" data-i18n="adb_easylist_desc">Główna lista blokowania reklam (~60 000 reguł). Odświeżana co 7 dni automatycznie.</div>
+              <div id="adb-el-updated" style="display:none;font-size:11px;color:var(--text-dim);margin-top:3px"></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-easylist" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- EasyPrivacy -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label">
+                <span data-i18n="adb_easyprivacy_label">EasyPrivacy</span>
+                <span id="adb-ep-badge" style="display:none;margin-left:7px;font-size:11px;font-weight:400;color:var(--text-dim);background:var(--surface);padding:1px 7px;border-radius:10px;border:1px solid var(--border)"></span>
+              </div>
+              <div class="setting-desc" data-i18n="adb_easyprivacy_desc">Blokuje trackery i skrypty śledzące (~30 000 reguł). Może spowolnić pierwsze uruchomienie.</div>
+              <div id="adb-ep-updated" style="display:none;font-size:11px;color:var(--text-dim);margin-top:3px"></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-easyprivacy">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Przycisk odśwież listy -->
+          <div style="padding:4px 0 14px">
+            <button id="adb-btn-refresh">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              <span id="adb-refresh-label" data-i18n="adb_refresh_btn">Aktualizuj listy teraz</span>
+            </button>
+          </div>
+
+          <!-- Moje Filtry -->
+          <div id="adb-my-filters-section">
+            <div class="setting-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)" data-i18n="adb_my_filters_title">Moje Filtry</div>
+            <div id="adb-my-filters-hint"><span data-i18n="adb_my_filters_hint">Jedna reguła na linię. Obsługiwane formaty:</span><br>
+              <code style="color:var(--accent)" data-i18n="adb_my_filters_example_domain">||domena.com^</code> <span data-i18n="adb_my_filters_block">— blokuj domenę</span> &nbsp;|&nbsp;
+              <code style="color:var(--accent)" data-i18n="adb_my_filters_example_css">##.klasa</code> <span data-i18n="adb_my_filters_hide">— ukryj element CSS</span>
+            </div>
+            <textarea id="adb-my-filters-textarea" spellcheck="false" data-i18n-placeholder="adb_my_filters_placeholder" placeholder="! Przykłady:&#10;||ads.example.com^&#10;##.banner-ad&#10;##div[id^=&quot;ad-&quot;]"></textarea>
+            <div>
+              <button id="adb-my-filters-save" data-i18n="adb_my_filters_save">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+                Zapisz filtry
+              </button>
+            </div>
+          </div>
+
+          <!-- Separator: Dodatkowe opcje -->
+          <div class="setting-row" style="padding:14px 0 6px;border-bottom:none">
+            <div class="setting-label" style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim)" data-i18n="adb_extra_options">Dodatkowe opcje</div>
+          </div>
+
+          <!-- EasyList Cookie -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label">
+                <span data-i18n="adb_cookies_label">EasyList Cookie</span>
+                <span id="adb-ec-badge" style="display:none;margin-left:7px;font-size:11px;font-weight:400;color:var(--text-dim);background:var(--surface);padding:1px 7px;border-radius:10px;border:1px solid var(--border)"></span>
+              </div>
+              <div class="setting-desc" data-i18n="adb_cookies_desc">Automatycznie ukrywa banery cookie / GDPR na podstawie listy EasyList Cookie</div>
+              <div id="adb-ec-updated" style="display:none;font-size:11px;color:var(--text-dim);margin-top:3px"></div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-cookie-banners" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Tryb agresywny -->
+          <div class="setting-row-inline">
+            <div class="setting-row-inline-text">
+              <div class="setting-label">
+                <span data-i18n="adb_aggressive_label">Tryb agresywny</span>
+                <span data-i18n="adb_experimental" style="margin-left:7px;font-size:11px;font-weight:400;color:#e8a000;background:rgba(232,160,0,.12);padding:1px 7px;border-radius:10px;border:1px solid rgba(232,160,0,.3)">Eksperymentalne</span>
+              </div>
+              <div class="setting-desc" data-i18n="adb_aggressive_desc">Blokuje również elementy mediów społecznościowych (Facebook, Instagram, TikTok, X…). Może powodować problemy z wyświetlaniem niektórych stron.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="adb-toggle-aggressive">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          </div>
+
+        </div>
+        <!-- Koniec sekcji Adblock -->
+
+        <!-- Sekcja Prześlij na urządzenie -->
+        <div class="settings-section" id="section-sendtodevice">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="send_to_device_settings">Prześlij na urządzenie</div>
+            <button class="icon-btn" id="settings-close-sendtodevice" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Opcja: Pokazuj na pasku wyszukiwania -->
+          <div class="setting-row-inline" style="border-bottom:1px solid var(--border)">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="qr_show_in_bar">Pokazuj na pasku wyszukiwania</div>
+              <div class="setting-desc" data-i18n="qr_show_in_bar_desc">Wyświetla przycisk kod QR w pasku adresu umożliwiający przesłanie strony na inne urządzenie</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="qr-toggle-show" checked>
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <!-- Opcja: Wyłącz dodawanie czasu YouTube do QR -->
+          <div class="setting-row-inline" style="border-bottom:1px solid var(--border)">
+            <div class="setting-row-inline-text">
+              <div class="setting-label" data-i18n="qr_disable_yt_time">Wyłącz dodawanie czasu z YouTube do QR code</div>
+              <div class="setting-desc" data-i18n="qr_disable_yt_time_desc">Nie dodaje aktualnego czasu odtwarzania wideo z YouTube do kodu QR</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="qr-toggle-disable-yt-time">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+        </div>
+        <!-- Koniec sekcji Send to Device -->
+
+        <!-- ══ Sekcja: Import danych z innej przeglądarki ══ -->
+        <div class="settings-section" id="section-import">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="import_data">Import danych</div>
+            <button class="icon-btn" id="settings-close-import" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Skanowanie -->
+          <div id="import-scanning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+            <span data-i18n="import_detecting">Wykrywanie zainstalowanych przeglądarek…</span>
+          </div>
+
+          <!-- Brak przeglądarek -->
+          <div id="import-no-browsers">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div data-i18n="import_no_browsers">Nie znaleziono żadnych przeglądarek z danymi do importu.</div>
+            <div style="font-size:11px;margin-top:2px" data-i18n="import_supported">Obsługiwane: Chrome, Edge, Brave, Brave Origin, Opera, Vivaldi, Firefox</div>
+          </div>
+
+          <!-- Lista przeglądarek -->
+          <div class="import-browser-list" id="import-browser-list" style="display:none"></div>
+
+          <!-- Co importować -->
+          <div class="import-what-row" id="import-what-row" style="display:none">
+            <div class="import-what-title" data-i18n="import_what">Co importować</div>
+            <div class="import-toggle-row" id="import-chk-bookmarks-row">
+              <div class="import-toggle-info">
+                <div class="import-toggle-label" data-i18n="import_bookmarks">Zakładki</div>
+                <div class="import-toggle-sublabel" id="import-bk-count"></div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="import-chk-bookmarks" checked>
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+            <div class="import-toggle-row" id="import-chk-history-row">
+              <div class="import-toggle-info">
+                <div class="import-toggle-label" data-i18n="import_history">Historia przeglądania</div>
+                <div class="import-toggle-sublabel" id="import-hi-note"></div>
+              </div>
+              <label class="toggle-switch">
+                <input type="checkbox" id="import-chk-history" checked>
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+
+          <button id="import-run-btn" disabled style="display:none" data-i18n="import_run">Importuj</button>
+          <div id="import-result"></div>
+          <div class="import-note" id="import-note" style="display:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="8.01"/>
+              <line x1="12" y1="12" x2="12" y2="16"/>
+            </svg>
+            <span data-i18n="import_note">Jeśli przeglądarka jest aktualnie otwarta, zamknij ją przed importem historii, aby uniknąć błędów blokady pliku.</span>
+          </div>
+        </div>
+        <!-- Koniec sekcji Import -->
+
+        <!-- Sekcja: Domyślna przeglądarka -->
+        <div class="settings-section" id="section-domyslna">
+          <div class="settings-top">
+            <div class="section-heading" data-i18n="default_browser_settings">Domyślna przeglądarka</div>
+            <button class="icon-btn" id="settings-close-domyslna" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div id="default-browser-card">
+            <div id="default-browser-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+            </div>
+            <div id="default-browser-info">
+              <div class="db-title">Nitrix</div>
+              <div class="db-sub" data-i18n="default_browser_desc">Ustaw Nitrix jako domyślną przeglądarkę — linki z innych aplikacji będą otwierać się w Nitrix.</div>
+            </div>
+          </div>
+
+          <div id="default-browser-status" class="not-default">
+            <svg id="db-status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="8.01"/><line x1="12" y1="12" x2="12" y2="16"/>
+            </svg>
+            <span id="db-status-text" data-i18n="default_browser_checking">Sprawdzanie stanu…</span>
+          </div>
+
+          <button id="set-default-btn" data-i18n="set_default_browser">Ustaw jako domyślną przeglądarkę</button>
+        </div>
+        <!-- Koniec sekcji Domyślna przeglądarka -->
+
+      </div>
+    </div>
+  </div>
+  <div id="history-overlay">
+    <div id="history-panel">
+      <!-- Komunikat trybu prywatnego -->
+      <div id="history-private-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <span data-i18n="history_private_notice">Jesteś w <strong>trybie prywatnym</strong> — aktualnie przeglądasz historię trybu normalnego</span>
+      </div>
+      <div id="history-panel-body">
+      <!-- Sidebar -->
+      <div id="history-sidebar">
+        <div class="history-sidebar-title" data-i18n="history">Historia</div>
+        <div class="history-sidebar-item active" data-hsection="browsing">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span data-i18n="browsing_history">Historia przeglądania</span>
+        </div>
+        <div class="history-sidebar-item" data-hsection="downloads">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span data-i18n="dl_history">Historia pobierania</span>
+        </div>
+      </div>
+      <!-- Main content -->
+      <div id="history-main">
+        <!-- Historia przeglądania -->
+        <div id="history-section-browsing" class="history-section active">
+          <div id="history-header">
+            <h2 data-i18n="browsing_history">Historia przeglądania</h2>
+            <div id="history-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="history-search" type="text" placeholder="Szukaj w historii..." data-i18n-placeholder="search_history"/>
+            </div>
+            <button id="history-clear-btn" title="Wyczyść całą historię" data-i18n-title="clear_all_history">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+              <span data-i18n="clear_all">Wyczyść wszystko</span>
+            </button>
+            <button id="history-close-btn" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div id="history-list">
+            <div id="history-empty" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span data-i18n="no_history">Brak historii</span>
+            </div>
+          </div>
+        </div>
+        <!-- Historia pobierania -->
+        <div id="history-section-downloads" class="history-section">
+          <div id="dl-history-header">
+            <h2 data-i18n="dl_history">Historia pobierania</h2>
+            <div id="dl-history-search-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              <input id="dl-history-search" type="text" placeholder="Szukaj w pobranych..." data-i18n-placeholder="search_downloads"/>
+            </div>
+            <button id="dl-history-clear-btn" title="Wyczyść historię pobierania" data-i18n-title="clear_dl_history">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+              </svg>
+              <span data-i18n="clear_all">Wyczyść wszystko</span>
+            </button>
+            <button id="dl-history-close-btn" title="Zamknij" data-i18n-title="close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+          <div id="dl-history-list">
+            <div id="dl-history-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span data-i18n="no_downloads">Brak pobranych plików</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      </div><!-- /history-panel-body -->
+    </div>
+  </div>
+
+  <!-- Pasek zakładek -->
+  <div id="bookmarks-bar">
+    <button id="bk-add-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span data-i18n="add_bookmark">Dodaj zakładkę</span>
+    </button>
+    <button id="bk-all-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      <span data-i18n="all_bookmarks">Wszystkie Zakładki</span>
+    </button>
+  </div>
+
+  <!-- Modal "Wszystkie Zakładki" -->
+  <!-- ── Modal wyboru zakładek startowych ────────────────────────────── -->
+  <div id="sbk-overlay">
+    <div id="sbk-modal">
+      <div class="sbk-header">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span data-i18n="startup_bk_modal_title">Zakładki na starcie</span>
+        </h3>
+        <button id="sbk-close">✕</button>
+      </div>
+      <div id="sbk-search-wrap">
+        <span id="sbk-search-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+        <input id="sbk-search" type="text" autocomplete="off" spellcheck="false"
+          data-i18n-placeholder="startup_bk_search_ph" placeholder="Szukaj zakładek…"/>
+      </div>
+      <div id="sbk-list"></div>
+      <div id="sbk-empty"></div>
+      <div id="sbk-footer">
+        <span id="sbk-footer-count"><strong id="sbk-footer-num">0</strong> <span id="sbk-footer-label" data-i18n="startup_bk_selected">zakładek wybranych</span></span>
+        <button id="sbk-confirm-btn" data-i18n="startup_bk_confirm">Gotowe</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bk-all-overlay">
+    <div id="bk-all-modal">
+      <div class="bkall-header">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span data-i18n="all_bookmarks">Wszystkie Zakładki</span>
+        </h3>
+        <button id="bk-all-close" title="Zamknij">×</button>
+      </div>
+      <div id="bk-all-search-wrap">
+        <span id="bk-all-search-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+        <input id="bk-all-search" type="text" placeholder="Szukaj zakładek..." data-i18n-placeholder="bk_all_search_ph">
+      </div>
+      <div id="bk-all-drag-hint">
+        <span class="hint-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        <span data-i18n="bk_drag_hint">Przeciąganie niedostępne podczas wyszukiwania</span>
+      </div>
+      <div id="bk-all-list"></div>
+      <div id="bk-all-empty" data-i18n="bk_all_empty">Brak zakładek</div>
+      <div id="bk-all-footer">
+        <button id="bk-all-add-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span data-i18n="add_bookmark">Dodaj zakładkę</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal zakładki -->
+  <div id="bk-modal-overlay">
+    <div id="bk-modal">
+      <h3 data-i18n="add_bookmark">Dodaj zakładkę</h3>
+      <div class="bk-field">
+        <label data-i18n="name">Nazwa</label>
+        <input id="bk-name-input" type="text" placeholder="np. Google" data-i18n-placeholder="bk_name_placeholder"/>
+      </div>
+      <div class="bk-field">
+        <label data-i18n="url">Adres URL</label>
+        <input id="bk-url-input" type="text" placeholder="https://..." data-i18n-placeholder="bk_url_placeholder"/>
+      </div>
+      <div class="bk-modal-btns">
+        <button class="btn-cancel" id="bk-cancel" data-i18n="cancel">Anuluj</button>
+        <button class="btn-save"   id="bk-save" data-i18n="save">Zapisz</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WebView container -->
+  <div id="webview-container">
+    <div id="loader"></div>
+    <div id="page-find-panel" role="dialog" aria-modal="false" aria-hidden="true" data-i18n-aria-label="find_panel_label">
+      <input id="page-find-input" type="search" autocomplete="off" spellcheck="false"
+        placeholder="Znajdź na stronie" data-i18n-placeholder="find_placeholder" data-i18n-aria-label="find_placeholder">
+      <span id="page-find-count" aria-live="polite"></span>
+      <button class="page-find-btn" id="page-find-prev" type="button" title="Poprzedni wynik" data-i18n-title="find_previous" data-i18n-aria-label="find_previous">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      </button>
+      <button class="page-find-btn" id="page-find-next" type="button" title="Następny wynik" data-i18n-title="find_next" data-i18n-aria-label="find_next">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="page-find-btn page-find-close" id="page-find-close" type="button" title="Zamknij" data-i18n-title="find_close" data-i18n-aria-label="find_close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Pasek aktualizacji -->
+  <div id="update-overlay">
+    <div id="update-card">
+      <div id="update-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      </div>
+      <div id="update-card-title" data-i18n="update_available_title">Dostępna jest nowsza wersja przeglądarki!</div>
+      <div id="update-card-sub" id="update-card-sub" data-i18n="update_sub_default">Pobierz najnowszą wersję aby korzystać z najnowszych funkcji i poprawek.</div>
+      <div id="update-progress-wrap">
+        <div id="update-progress-bar"><div id="update-progress-fill"></div></div>
+        <div id="update-progress-label">0%</div>
+      </div>
+      <button id="update-btn-now" data-i18n="update_download">Pobierz teraz</button>
+    </div>
+    <button id="update-btn-later" data-i18n="later">Może później</button>
+  </div>
+
+  <!-- Popup bezpieczeństwa -->
+  <div id="sec-popup">
+    <div class="sec-header">
+      <svg id="sec-popup-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#34a853" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+      <span class="sec-title" id="sec-popup-title" data-i18n="secure_conn">Połączenie jest bezpieczne</span>
+    </div>
+    <div class="sec-desc" id="sec-popup-desc" data-i18n="secure_desc">
+      Ta strona jest zabezpieczona protokołem HTTPS. Wysyłanie kart kredytowych i innych poufnych danych pozostaje prywatne.
+    </div>
+    <button class="sec-cert-btn" id="sec-cert-btn">
+      <span id="sec-cert-label" data-i18n="cert_valid">Certyfikat jest ważny</span>
+      <span class="sec-cert-status valid" id="sec-cert-status">✓</span>
+    </button>
+  </div>
+
+  <!-- Modal certyfikatu -->
+  <div id="cert-modal-overlay">
+    <div id="cert-modal">
+
+      <!-- Sidebar -->
+      <div id="cert-sidebar">
+        <div class="cert-sidebar-title" data-i18n="cert_title">Certyfikat</div>
+        <div class="cert-sidebar-item active" data-certsection="ogolne">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+          </svg>
+          <span data-i18n="cert_general">Ogólne</span>
+        </div>
+        <div class="cert-sidebar-item" data-certsection="zaawansowane">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+          </svg>
+          <span data-i18n="cert_advanced">Zaawansowane</span>
+        </div>
+      </div>
+
+      <!-- Główna treść -->
+      <div id="cert-main">
+        <div class="cert-modal-header">
+          <div class="cert-modal-title" id="cert-modal-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/>
+            </svg>
+            <span data-i18n="cert_title">Certyfikat</span>
+          </div>
+          <button class="icon-btn" id="cert-modal-close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sekcja: Ogólne -->
+        <div class="cert-section-wrap active" id="cert-section-ogolne">
+          <!-- wypełniane dynamicznie -->
+        </div>
+
+        <!-- Sekcja: Zaawansowane -->
+        <div class="cert-section-wrap" id="cert-section-zaawansowane">
+          <!-- wypełniane dynamicznie -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="ctx-backdrop"></div>
+  <div id="ctx-menu">
+    <!-- Tryb: webview -->
+    <div class="ctx-item ctx-mode-webview" data-action="refresh">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+      </svg>
+      <span data-i18n="reload">Odśwież</span>
+    </div>
+    <div class="ctx-separator ctx-mode-webview"></div>
+    <div class="ctx-item ctx-mode-webview" data-action="back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      <span data-i18n="back">Wstecz</span>
+    </div>
+    <div class="ctx-item ctx-mode-webview" data-action="forward">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+      <span data-i18n="forward">Dalej</span>
+    </div>
+    <div class="ctx-separator ctx-mode-webview ctx-link-item"></div>
+    <div class="ctx-item ctx-mode-webview ctx-link-item" data-action="open-link-current">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      <span data-i18n="ctx_open_link_current">Otwórz link w bieżącej karcie</span>
+    </div>
+    <div class="ctx-item ctx-mode-webview ctx-link-item" data-action="open-link-new">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+        <polyline points="15 3 21 3 21 9"/>
+        <line x1="10" y1="14" x2="21" y2="3"/>
+      </svg>
+      <span data-i18n="ctx_open_link_new">Otwórz link w nowej karcie</span>
+    </div>
+    <div class="ctx-separator ctx-mode-webview ctx-image-item"></div>
+    <div class="ctx-item ctx-mode-webview ctx-image-item" data-action="open-image-current">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      <span data-i18n="ctx_open_image_current">Otwórz grafikę w bieżącej karcie</span>
+    </div>
+    <div class="ctx-item ctx-mode-webview ctx-image-item" data-action="open-image-new">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      <span data-i18n="ctx_open_image_new">Otwórz grafikę w nowej karcie</span>
+    </div>
+    <div class="ctx-separator ctx-mode-webview"></div>
+    <div class="ctx-item ctx-mode-webview" data-action="save-as">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      <span class="ctx-save-label" data-i18n="save_as">Zapisz jako…</span>
+    </div>
+    <div class="ctx-separator ctx-mode-webview"></div>
+    <div class="ctx-item ctx-mode-webview" data-action="pick-element">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2z"/>
+        <line x1="18" y1="9" x2="12" y2="15"/>
+        <line x1="12" y1="9" x2="18" y2="15"/>
+      </svg>
+      <span data-i18n="remove_element">Usuń element</span>
+    </div>
+    <!-- Tryb: zakładka -->
+    <div class="ctx-item ctx-mode-bookmark" data-action="bk-edit">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+      </svg>
+      <span data-i18n="edit_bookmark">Edytuj zakładkę</span>
+    </div>
+    <div class="ctx-separator ctx-mode-bookmark"></div>
+    <div class="ctx-item ctx-mode-bookmark ctx-item-danger" data-action="bk-delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/>
+        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+        <path d="M9 6V4h6v2"/>
+      </svg>
+      <span data-i18n="delete_bookmark">Usuń zakładkę</span>
+    </div>
+  </div>
+
+</div>
+<script src="renderer-features.js" integrity="sha256-9UC4BfB1EFhPoVXCZstQjzE16geOoOIxaNhtWR3v9zg="></script>
+<script src="renderer.js" integrity="sha256-1lgrzLoldp+Mw0EH+rdnGYa5XPOSkiiWvj3MdstuCaM="></script>
+</body>
+</html>
