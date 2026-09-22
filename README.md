@@ -1,3 +1,67 @@
+# Nitrix Browser
+
+Nitrix to lekka przeglądarka internetowa zbudowana na Electronie i Chromium. Projekt stawia na prosty interfejs, wygodne codzienne przeglądanie stron oraz większą kontrolę nad danymi witryn i uprawnieniami.
+
+Nitrix nie ma własnej telemetrii i nie wysyła danych użytkownika na własne serwery.
+
+## Wersja 2.1.0 BETA
+
+Nitrix jest projektem w aktywnej fazie rozwoju. Oznacza to, że:
+
+- mogą występować błędy,
+- część funkcji może jeszcze wymagać dopracowania,
+- mogą występować problemy związane z bezpieczeństwem lub zgodnością stron,
+- używasz Nitrix na własną odpowiedzialność.
+
+Szczegóły znajdują się w licencji MIT.
+
+## Obsługiwane systemy
+
+- Windows x64
+- Linux x86_64 w formacie AppImage
+
+Wersja AppImage działa bez instalacji zależności przez menedżer pakietów. Obsługa efektu Backdrop Blur na Linuksie zależy od używanego środowiska graficznego i kompozytora.
+
+## Funkcje
+
+- Przeglądanie wielokartowe z kartami prywatnymi
+- Pasek zakładek, lista wszystkich zakładek oraz eksport zakładek do pliku HTML
+- Historia przeglądania z wyszukiwaniem oraz historia pobierania plików
+- Menedżer haseł zabezpieczony PIN-em i autouzupełnianie na stronach logowania
+- Import zakładek, historii i haseł z obsługiwanych przeglądarek
+- Ustawienie Nitrix jako domyślnej przeglądarki
+- Obsługa lokalnych plików HTML
+- Wbudowane strony `nitrix://`, między innymi ustawienia, historia i „Co nowego?”
+- Nitrix Adblock z możliwością wyłączenia go dla pojedynczej witryny oraz własnymi filtrami
+- Panel pobierania z postępem, prędkością, wstrzymywaniem, wznawianiem i anulowaniem
+- Informacje o połączeniu HTTPS i podgląd certyfikatu SSL
+- Ochrona lokalnego adresu IP przed odczytem przez WebRTC, domyślnie włączona
+- Uprawnienia witryn dla kamery, mikrofonu, lokalizacji i powiadomień
+- Usuwanie danych i zgód pojedynczej witryny lub całej przeglądarki
+- Przybliżona lokalizacja po IP wyłącznie po udzieleniu zgody
+- Wyszukiwanie tekstu na stronie z licznikiem wyników
+- Usypianie nieaktywnych kart w celu ograniczenia zużycia pamięci
+- Przywracanie poprzedniej sesji i ostatnio zamkniętych kart
+- Motywy: ciemny, jasny, prywatny i Backdrop Blur
+- Język polski i angielski
+- Automatyczne aktualizacje dla Windows i AppImage
+
+## Najważniejsze skróty klawiszowe
+
+| Skrót | Działanie |
+| --- | --- |
+| `Ctrl + T` | Nowa karta |
+| `Ctrl + W` | Zamknięcie bieżącej karty |
+| `Ctrl + Shift + T` | Przywrócenie zamkniętej karty |
+| `Ctrl + Tab` / `Ctrl + PgDn` | Następna karta |
+| `Ctrl + N` | Nowe okno |
+| `Ctrl + Shift + N` | Nowe okno prywatne |
+| `Alt + ←` / `Alt + →` | Wstecz / dalej |
+| `Ctrl + D` | Dodanie zakładki |
+| `Ctrl + H` / `Ctrl + J` | Historia / pobrania |
+| `Ctrl + K` | Przejście do paska adresu |
+| `Ctrl + F` / `F3` | Wyszukiwanie na stronie |
+| `F5` / `Ctrl + R` | Odświeżenie strony |
 | `Ctrl + F5` / `Ctrl + Shift + R` | Twarde odświeżenie bez cache |
 | `Esc` | Zatrzymanie ładowania lub zamknięcie otwartego panelu |
 
