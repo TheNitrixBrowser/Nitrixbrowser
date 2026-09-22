@@ -1,0 +1,10 @@
+LIBRARY KERNEL32.dll
+EXPORTS
+  GetModuleFileNameW
+  GetModuleHandleW
+  GetProcAddress
+  GetCommandLineW
+  SetEnvironmentVariableW
+  CreateProcessW
+  CloseHandle
+  ExitProcess
