@@ -4,7 +4,7 @@ Nitrix to lekka przeglądarka internetowa zbudowana na Electronie i Chromium. Pr
 
 Nitrix nie ma własnej telemetrii i nie wysyła danych użytkownika na własne serwery.
 
-## Wersja 2.1.0 BETA
+## Wersja 2.1.1 BETA
 
 Nitrix jest projektem w aktywnej fazie rozwoju. Oznacza to, że:
 
@@ -28,6 +28,10 @@ Wersja AppImage działa bez instalacji zależności przez menedżer pakietów. O
 - Pasek zakładek, lista wszystkich zakładek oraz eksport zakładek do pliku HTML
 - Historia przeglądania z wyszukiwaniem oraz historia pobierania plików
 - Menedżer haseł zabezpieczony PIN-em i autouzupełnianie na stronach logowania
+- Autouzupełnianie wyłącznie na adresie, dla którego zapisano hasło, także w formularzach osadzonych w ramkach
+- Ochrona menedżera haseł: hasła, listę wpisów i PIN można odczytać lub zmienić dopiero po odblokowaniu menedżera
+- Wzmocniona izolacja interfejsu: czyszczenie danych wyświetlanych w UI, ciaśniejsza polityka CSP i blokada odpytywania adresów lokalnych przez podgląd certyfikatu
+- Bezpieczniejszy zapis danych: kopie `.recovery` uszkodzonych plików, zapis przez plik tymczasowy i limity rozmiaru
 - Import zakładek, historii i haseł z obsługiwanych przeglądarek
 - Ustawienie Nitrix jako domyślnej przeglądarki
 - Obsługa lokalnych plików HTML
@@ -64,6 +68,19 @@ Wersja AppImage działa bez instalacji zależności przez menedżer pakietów. O
 | `F5` / `Ctrl + R` | Odświeżenie strony |
 | `Ctrl + F5` / `Ctrl + Shift + R` | Twarde odświeżenie bez cache |
 | `Esc` | Zatrzymanie ładowania lub zamknięcie otwartego panelu |
+
+## Co nowego w 2.1.1
+
+- Wzmocniono ochronę menedżera haseł: przeglądanie, zapis i usuwanie haseł oraz zmiana PIN-u wymagają odblokowanego menedżera, a odblokowanie wygasa po minucie bezczynności.
+- Bez ustawionego PIN-u dostęp do haseł ma wyłącznie interfejs Nitrixa, nie strona, ramka ani obce okno.
+- Autouzupełnianie działa w izolowanym środowisku strony i tylko na adresie, dla którego zapisano hasło, z obsługą formularzy w ramkach oraz logowania Librus i Synergii.
+- Wzmocniono bezpieczeństwo interfejsu: czyszczenie nazw domen, pól certyfikatu i reguł blokowania, ciaśniejsza polityka CSP oraz brak automatycznej zgody na blokadę wskaźnika i zapis do schowka.
+- Okna otwierane przez strony muszą być adresami http lub https, a otwieranie lokalnych plików odrzuca ścieżki sieciowe i adresy `file://host`.
+- Informacje o certyfikacie są dostępne tylko dla interfejsu Nitrixa i nie mogą posłużyć do odpytywania adresów lokalnych.
+- Uszkodzone pliki danych są odkładane jako kopia `.recovery`, zapis idzie przez plik tymczasowy, a zbyt duże pliki nie są wczytywane.
+- Historia mieści 5000 wpisów, a oczekujące zmiany zakładek i historii są zapisywane przy zamykaniu przeglądarki.
+- Ograniczono liczbę restartów interfejsu po awarii, zwalniano timery przy zamykaniu okna i ograniczono pamięć przeznaczoną na ikony stron.
+- Import bardzo głęboko zagnieżdżonych folderów zakładek nie wywraca już przeglądarki.
 
 ## Co nowego w 2.1.0
 
@@ -117,8 +134,8 @@ Pobierz instalator `.exe` dla architektury x64 i uruchom go jak zwykły program 
 Pobierz plik `.AppImage`, nadaj mu uprawnienia do uruchamiania, a następnie uruchom go:
 
 ```bash
-chmod +x Nitrix-2.1.0-x86_64.AppImage
-./Nitrix-2.1.0-x86_64.AppImage
+chmod +x Nitrix-2.1.1-x86_64.AppImage
+./Nitrix-2.1.1-x86_64.AppImage
 ```
 
 ## Uruchomienie ze źródeł
