@@ -43,6 +43,9 @@ test('original PIN bypass is rejected for reads, writes, deletion and PIN replac
   }
   assert.equal(f.reads(), 0)
   assert.equal(f.changes(), 0)
+  // Metadane (strony i loginy) też są prywatne — bez PIN-u lista jest pusta.
+  assert.equal(f.call('passwords-list').length, 0)
+  assert.equal(f.call('pin-verify', '123456'), true)
   const metadata = f.call('passwords-list')
   assert.equal(metadata[0].site, 'example.test')
   assert.equal('plainPass' in metadata[0], false)

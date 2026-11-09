@@ -2369,7 +2369,7 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
         }
         const gen = ++faviconGen
         const googleUrl = `https://www.google.com/s2/favicons?domain=${getDomain(e.url)}&sz=32`
-        // Pokaż favicon z Google service jako bazowy fallback
+        // Pokaż favicon z Google service jako bazowy fallback.
         faviconEl.style.display = ''
         faviconEl.src = googleUrl
         faviconEl.onerror = () => {
@@ -2730,8 +2730,8 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
       } catch(e) {}
       const tc = item.type === 'fetch' ? 'fetch' : 'xhr'
       return `<div class="adb-item">
-        <span class="adb-item-type ${tc}">${(item.type||'').toUpperCase()}</span>
-        <span class="adb-item-url" title="${item.url}">${shortUrl}</span>
+        <span class="adb-item-type ${tc}">${escHtml((item.type || '').toUpperCase())}</span>
+        <span class="adb-item-url" title="${escHtml(item.url || '')}">${escHtml(shortUrl)}</span>
       </div>`
     }).join('')
   }
@@ -3057,13 +3057,16 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     const items = hostname ? await getCustomBlockedForHost(hostname) : []
     adbCustomSection.style.display = items.length ? '' : 'none'
     if (!items.length) { adbCustomList.innerHTML = ''; return }
-    adbCustomList.innerHTML = items.map((sel, idx) => `
+    adbCustomList.innerHTML = items.map((sel, idx) => {
+      // Selektor pochodzi z DOM-u strony — nigdy nie może wejść do HTML-a jako znacznik.
+      const safeSel = escHtml(sel)
+      return `
       <div class="adb-item" data-idx="${idx}">
         <span class="adb-item-type elem">ELEM</span>
-        <span class="adb-item-url" title="${sel}">${sel.length > 40 ? sel.slice(0, 40) + '…' : sel}</span>
+        <span class="adb-item-url" title="${safeSel}">${safeSel.length > 40 ? safeSel.slice(0, 40) + '…' : safeSel}</span>
         <button class="adb-item-del" data-sel="${encodeURIComponent(sel)}" title="${t('adblock_clear')}">✕</button>
       </div>
-    `).join('')
+    `}).join('')
     adbCustomList.querySelectorAll('.adb-item-del').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation()
@@ -4024,11 +4027,7 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
         const sel      = startupBookmarks.includes(bk.url)
         const safeName = bk.name.replace(/</g, '&lt;').replace(/>/g, '&gt;')
         const safeUrl  = bk.url.replace(/"/g, '&quot;')
-        let domain = ''
-        try { domain = new URL(bk.url).hostname } catch {}
-        const favSrc = domain
-          ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`
-          : ''
+        const favSrc = getFavicon(bk.url)
         return `<div class="sbk-item${sel ? ' sbk-selected' : ''}" data-url="${safeUrl}">
           <img class="sbk-item-favicon" src="${favSrc}" alt="" onerror="this.style.display='none'">
           <div class="sbk-item-info">
@@ -4292,6 +4291,15 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     return cfg.url(url)
   }
 
+  // Linki z menu kontekstowego też przechodzą przez walidację. Lokalny plik
+  // może zostać otwarty tylko wtedy, gdy bieżąca karta jest lokalna.
+  function safeContextUrl(raw, currentUrl) {
+    const safe = safeLoadURL(raw)
+    if (!safe) return null
+    if (/^file:/i.test(safe) && !/^file:/i.test(currentUrl || '')) return null
+    return safe
+  }
+
   function navigate(raw) {
     _pendingTyped = null   // reset zapamiętanego tekstu po nawigacji
     _typedVal = ''
@@ -4496,7 +4504,7 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
         done()
       }
       img.onerror = () => { _faviconCache.delete(hostname); done() }
-      img.src = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
+      img.src = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`
     }
   }
 
@@ -4513,13 +4521,17 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     _faviconFlush()
   }
 
+  // Przezroczysty piksel jako fallback, zanim ikona z Google service się wczyta.
+  // Dzięki temu <img> nie pokazuje zepsutej ikony, a układ nie skacze.
+  const EMPTY_FAVICON = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
+
   function _getCachedFavicon(url) {
     try {
       const hostname = new URL(url).hostname
       const cached = _faviconCache.get(hostname)
       if (cached && cached !== 'loading') return cached
-      return `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
-    } catch { return null }
+      return EMPTY_FAVICON
+    } catch { return EMPTY_FAVICON }
   }
 
   // Preload z opóźnieniem — nie startuje od razu przy starcie, żeby nie blokować
@@ -4545,7 +4557,7 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     try {
       const hostname = new URL(url).hostname
       const cached = _faviconCache.get(hostname)
-      const fallbackUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`
+      const fallbackUrl = EMPTY_FAVICON
       if (cached && cached !== 'loading') return cached
       // Zamiast osobnego Image() — wstaw do kolejki i podepnij cb przez polling
       if (!_faviconCache.has(hostname)) _cacheFavicon(hostname)
@@ -5279,7 +5291,14 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
 
     // ── Lista haseł ───────────────────────────────────────────────────
     async function renderPasswords() {
-      const raw    = await api.passwordsList()
+      let raw = await api.passwordsList()
+      // Metadane haseł też są prywatne: bez odblokowanego PIN-u main zwraca pustą listę.
+      // Anulowanie PIN-u (także kliknięcie obok) zamyka cały panel zamiast pokazywać pustą listę.
+      if (!raw.length && await api.pinHas() && !(await api.passwordsAccess())) {
+        if (!overlay.classList.contains('open')) return
+        if (!await askPin()) { lockPasswords(); return }
+        raw = await api.passwordsList()
+      }
       const q      = searchEl.value.trim().toLowerCase()
       const filtered = q ? raw.filter(e =>
         (e.site||'').toLowerCase().includes(q) ||
@@ -5301,11 +5320,10 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
           if (!/^https?:\/\//i.test(s)) s = 'https://' + s
           displaySite = new URL(s).hostname.replace(/^www\./, '')
         } catch(e) {}
-        const faviconDomain = (() => { try { let s = entry.site; if (!/^https?:\/\//i.test(s)) s='https://'+s; return new URL(s).hostname } catch { return entry.site } })()
         const item = document.createElement('div')
         item.className = 'pw-item'
         item.innerHTML = `
-          <img class="pw-item-favicon" src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(faviconDomain)}&sz=32" onerror="this.style.display='none'" alt="">
+          <img class="pw-item-favicon" alt="" aria-hidden="true">
           <div class="pw-item-info">
             <div class="pw-item-site">${escHtml(displaySite)}</div>
             <div class="pw-item-user">${escHtml(entry.user || '')}</div>
@@ -5320,6 +5338,13 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
           </button>`
 
+        const faviconEl = item.querySelector('.pw-item-favicon')
+        if (displaySite) {
+          faviconEl.src = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(displaySite)}&sz=64`
+          faviconEl.onerror = () => { faviconEl.style.visibility = 'hidden' }
+        } else {
+          faviconEl.style.visibility = 'hidden'
+        }
         item.querySelector('[data-copy]').onclick = async btn => {
           if (await hasPin()) { const ok = await askPin(); if (!ok) return }
           const r = await loadRaw()
@@ -5507,9 +5532,9 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
       window._autofillEntry = entry
       window._autofillWv    = wv
 
-      dotFavico.src = `https://www.google.com/s2/favicons?domain=${host}&sz=32`
-      dotFavico.onerror = () => { dotFavico.style.display = 'none' }
-      dotFavico.style.display = ''
+      // Bez usługi favicon trzeciej strony — popup i tak pokazuje nazwę witryny,
+      // a pytanie Google o każdy zapisany login ujawniałoby listę kont.
+      dotFavico.style.display = 'none'
       dotSite.textContent = host.replace(/^www\./, '')
       dotUser.textContent = entry.user || ''
       dotWrap.classList.add('visible')
@@ -6134,7 +6159,15 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
   let bkEditIndex   = -1   // -1 = nowa zakładka, >=0 = edycja
 
   function getFavicon(url) {
-    return _getCachedFavicon(url) || ''
+    const cached = _getCachedFavicon(url) || ''
+    // Cache jest zimny po restarcie, a pasek zakładek nie jest przerysowywany
+    // po jego rozgrzaniu. Wtedy pokaż ikonę wprost z usługi Google, zamiast
+    // zostawiać przezroczysty placeholder do końca sesji.
+    if (!cached || cached === EMPTY_FAVICON) {
+      const host = getDomain(url)
+      if (host) return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=64`
+    }
+    return cached
   }
 
   function openBkModal(idx = -1) {
@@ -7144,7 +7177,12 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     const tab = getActiveTab()
     if (!tab || !tab.url) return
     let hostname = ''
-    try { hostname = new URL(tab.url).hostname } catch { return }
+    let port = 443
+    try {
+      const parsed = new URL(tab.url)
+      hostname = parsed.hostname
+      port = parsed.port ? Number(parsed.port) : 443
+    } catch { return }
 
     const certModalOverlay   = document.getElementById('cert-modal-overlay')
     const certSectionOgolne  = document.getElementById('cert-section-ogolne')
@@ -7160,7 +7198,7 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     certSectionZaawans.innerHTML = ''
     certModalOverlay.classList.add('open')
 
-    const info = await window.electronAPI.getCertInfo(hostname).catch(() => null)
+    const info = await window.electronAPI.getCertInfo(hostname, port).catch(() => null)
 
     if (!info || !info.cert) {
       certSectionOgolne.innerHTML = `<div style="text-align:center;padding:30px;color:var(--text-dim);font-size:13px">${t('cert_no_data')}</div>`
@@ -7177,13 +7215,14 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     }
     function val(v) {
       if (v === undefined || v === null || v === '' || (Array.isArray(v) && v.length === 0)) return BRAK
-      if (Array.isArray(v)) return v.join(', ')
-      return v
+      return escHtml(Array.isArray(v) ? v.join(', ') : String(v))
     }
     function mono(v) {
       if (!v) return BRAK
-      return `<span style="font-family:monospace;font-size:11px">${v}</span>`
+      return `<span style="font-family:monospace;font-size:11px">${escHtml(String(v))}</span>`
     }
+    const sha256   = info.sha256   ? escHtml(String(info.sha256))   : BRAK
+    const pkSha256 = info.pkSha256 ? escHtml(String(info.pkSha256)) : BRAK
 
     const now = Date.now() / 1000
     const expired = c.validExpiry && now > c.validExpiry
@@ -7219,8 +7258,8 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
 
       <div class="cert-section">
         <div class="cert-section-title">${t('cert_sha256')}</div>
-        <div class="cert-row"><span class="cert-row-label">${t('cert_title')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.sha256 || BRAK}</span></div>
-        <div class="cert-row"><span class="cert-row-label">${t('cert_pubkey')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.pkSha256 || BRAK}</span></div>
+        <div class="cert-row"><span class="cert-row-label">${t('cert_title')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${sha256}</span></div>
+        <div class="cert-row"><span class="cert-row-label">${t('cert_pubkey')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${pkSha256}</span></div>
       </div>
     `
 
@@ -7263,8 +7302,8 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
 
       <div class="cert-section">
         <div class="cert-section-title">${t('cert_sha256')}</div>
-        <div class="cert-row"><span class="cert-row-label">${t('cert_title')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.sha256 || BRAK}</span></div>
-        <div class="cert-row"><span class="cert-row-label">${t('cert_pubkey')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${info.pkSha256 || BRAK}</span></div>
+        <div class="cert-row"><span class="cert-row-label">${t('cert_title')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${sha256}</span></div>
+        <div class="cert-row"><span class="cert-row-label">${t('cert_pubkey')}</span><span class="cert-row-value" style="font-family:monospace;font-size:11px;word-break:break-all">${pkSha256}</span></div>
       </div>
     `
   })
@@ -7393,17 +7432,23 @@ img.zoomed{max-width:none;max-height:none;cursor:zoom-out}
     } else if (action === 'open-link-current') {
       const t = getActiveTab()
       const url = savedParams && savedParams.linkURL
-      if (t && url) t.wv.loadURL(url)
+      const safe = url && safeContextUrl(url, t && t.url)
+      if (t && safe) t.wv.loadURL(safe)
     } else if (action === 'open-link-new') {
       const url = savedParams && savedParams.linkURL
-      if (url) createTab(url)
+      const active = getActiveTab()
+      const safe = url && safeContextUrl(url, active && active.url)
+      if (safe) createTab(safe)
     } else if (action === 'open-image-current') {
       const t = getActiveTab()
       const url = savedParams && savedParams.srcURL
-      if (t && url) t.wv.loadURL(url)
+      const safe = url && safeContextUrl(url, t && t.url)
+      if (t && safe) t.wv.loadURL(safe)
     } else if (action === 'open-image-new') {
       const url = savedParams && savedParams.srcURL
-      if (url) createTab(url)
+      const active = getActiveTab()
+      const safe = url && safeContextUrl(url, active && active.url)
+      if (safe) createTab(safe)
     } else if (action === 'back') {
       const t = getActiveTab()
       if (t) t.wv.goBack()

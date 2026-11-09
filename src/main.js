@@ -24,6 +24,7 @@ const { pathToFileURL, fileURLToPath } = require('url')
 const { autoUpdater } = require('electron-updater')
 const execFileAsync = promisify(execFile)
 const nativeAero = require('./browser-core')["native-aero"]
+const { escapeHtml, normalizeBlockedDomain } = require('./browser-core')["blocked-page"]
 // Only this application uses XWayland on KDE; the user's desktop session is unchanged.
 const nativeAeroBackend = nativeAero.configureBackend(app)
 nativeAero.restartForBackend(app, nativeAeroBackend)
@@ -49,8 +50,28 @@ process.on('unhandledRejection', (reason) => {
 
 // ── Folder danych — MUSI być przed app.ready i przed wszystkim ────────
 const dataDir = path.join(app.getPath('appData'), 'Nitrix')
-if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true })
+if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 })
+try { fs.chmodSync(dataDir, 0o700) } catch {}
 app.setPath('userData', dataDir)
+
+// Poufne pliki zapisujemy atomowo i z jawnymi uprawnieniami 0600.
+function _writePrivateFile(file, data) {
+  let temporary = null
+  try {
+    temporary = `${file}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`
+    const fd = fs.openSync(temporary, 'wx', 0o600)
+    try {
+      fs.writeFileSync(fd, data)
+      fs.fsyncSync(fd)
+    } finally { fs.closeSync(fd) }
+    try { fs.chmodSync(temporary, 0o600) } catch {}
+    fs.renameSync(temporary, file)
+    temporary = null
+    try { fs.chmodSync(file, 0o600) } catch {}
+    return true
+  } catch { return false }
+  finally { if (temporary) try { fs.unlinkSync(temporary) } catch {} }
+}
 const settingsFile = path.join(dataDir, 'settings.json')
 const { createStore, isRecord, isHistoryEntry, isBookmarks, isHistory,
   readLimitedFile, isBooleanRecord, isBlockedRules, isSettings } = require('./browser-core')["persistence"]
@@ -636,6 +657,11 @@ async function _isDefaultBrowserAsync() {
   return _isDefaultBrowser()
 }
 
+function _isLocalOnlyFilePath(filePath) {
+  return typeof filePath === 'string' && filePath.length > 0 && !filePath.includes('\0')
+    && !/^[\\/]{2}/.test(filePath)
+}
+
 function _normalizeLaunchFileTarget(arg) {
   if (typeof arg !== 'string') return null
 
@@ -654,6 +680,9 @@ function _normalizeLaunchFileTarget(arg) {
     filePath = path.resolve(raw)
   }
 
+  // ścieżki UNC i file://host/... mogą uruchomić SMB/NTLM; nigdy ich nie dotykamy
+  if (!_isLocalOnlyFilePath(filePath)) return null
+
   const ext = path.extname(filePath).toLowerCase()
   if (!OPENABLE_LOCAL_FILE_EXTENSIONS.has(ext)) return null
 
@@ -669,7 +698,8 @@ function _normalizeLaunchFileTarget(arg) {
 function _getLocalFilePathFromUrl(url) {
   if (typeof url !== 'string' || !/^file:\/\//i.test(url)) return null
   try {
-    return fileURLToPath(url)
+    const filePath = fileURLToPath(url)
+    return _isLocalOnlyFilePath(filePath) ? filePath : null
   } catch {
     return null
   }
@@ -966,14 +996,15 @@ setTimeout(() => {
   loadEasyList().catch(err => console.error('[Adblock] Error loading lists:', err))
 }, 2000) // Opóźnienie 2s żeby aplikacja mogła się uruchomić
 
-ipcMain.handle('custom-filters-load', () => loadCustomFilters())
+ipcMain.handle('custom-filters-load', e => trustedBrowserInterfaceSender(e) ? loadCustomFilters() : '')
 ipcMain.handle('custom-filters-save', (e, text) => {
+  if (!trustedBrowserInterfaceSender(e)) return false
   if (typeof text !== 'string' || text.length > 200000) return false
   saveCustomFilters(text)
   _parseCustomFilters(text)
   return true
 })
-ipcMain.handle('custom-filters-cosmetic', () => [...customCosmeticRules])
+ipcMain.handle('custom-filters-cosmetic', e => trustedBrowserInterfaceSender(e) ? [...customCosmeticRules] : [])
 
 // ── EasyList / EasyPrivacy — pobieranie i parsowanie ──────────────────
 const EASYLIST_URL        = 'https://easylist.to/easylist/easylist.txt'
@@ -1126,9 +1157,9 @@ async function loadEasyList() {
 }
 
 // IPC — ustawienia adblock
-ipcMain.handle('adblock-settings-load', () => loadAdblockSettings())
+ipcMain.handle('adblock-settings-load', e => trustedBrowserInterfaceSender(e) ? loadAdblockSettings() : {})
 ipcMain.handle('adblock-settings-save', async (e, data) => {
-  if (!data || typeof data !== 'object') return false
+  if (!trustedBrowserInterfaceSender(e) || !data || typeof data !== 'object') return false
   const prev = loadAdblockSettings()
   saveAdblockSettings(data)
   // Jeśli zmieniły się flagi list — przeładuj je
@@ -1152,7 +1183,8 @@ ipcMain.handle('adblock-settings-save', async (e, data) => {
   return true
 })
 // Wymuś odświeżenie list (np. przycisk "Aktualizuj teraz")
-ipcMain.handle('adblock-refresh-lists', async () => {
+ipcMain.handle('adblock-refresh-lists', async e => {
+  if (!trustedBrowserInterfaceSender(e)) return false
   // Usuń pliki cache żeby wymusić re-download
   try { if (fs.existsSync(easyListFile))       fs.unlinkSync(easyListFile)       } catch(e) {}
   try { if (fs.existsSync(easyPrivacyFile))    fs.unlinkSync(easyPrivacyFile)    } catch(e) {}
@@ -1161,8 +1193,9 @@ ipcMain.handle('adblock-refresh-lists', async () => {
   return true
 })
 // Zwróć info o listach (data pobrania, liczba domen)
-ipcMain.handle('adblock-lists-info', () => {
+ipcMain.handle('adblock-lists-info', e => {
   const info = { easyList: null, easyPrivacy: null, easyListCookie: null }
+  if (!trustedBrowserInterfaceSender(e)) return info
   try {
     if (fs.existsSync(easyListFile)) {
       const s = fs.statSync(easyListFile)
@@ -1192,8 +1225,8 @@ function _saveCustomBlocked(data) {
   _loadCustomBlocked()
   return store.write(customBlockedFile, data, isBlockedRules)
 }
-ipcMain.handle('custom-blocked-load', () => _loadCustomBlocked())
-ipcMain.handle('custom-blocked-save', (e, data) => _saveCustomBlocked(data))
+ipcMain.handle('custom-blocked-load', e => trustedBrowserInterfaceSender(e) ? _loadCustomBlocked() : {})
+ipcMain.handle('custom-blocked-save', (e, data) => trustedBrowserInterfaceSender(e) && _saveCustomBlocked(data))
 
 let _historyCache = null
 let _historySaveTimer = null
@@ -1232,6 +1265,7 @@ function addHistoryEntry(entry) {
 // ── Handlery IPC ──────────────────────────────────────────────────────
 // ── Menu kontekstowe ──────────────────────────────────────────────────
 ipcMain.on('show-context-menu', (event) => {
+  if (!trustedBrowserInterfaceSender(event)) return
   const win = BrowserWindow.fromWebContents(event.sender)
   const menu = Menu.buildFromTemplate([
     {
@@ -1269,11 +1303,13 @@ ipcMain.on('open-webview-devtools', (e, webContentsId, action) => {
   }
 })
 
-ipcMain.on('window-minimize', () => {
+ipcMain.on('window-minimize', event => {
+  if (!trustedBrowserInterfaceSender(event)) return
   const win = BrowserWindow.getFocusedWindow()
   if (win) win.minimize()
 })
-ipcMain.on('window-maximize', () => {
+ipcMain.on('window-maximize', event => {
+  if (!trustedBrowserInterfaceSender(event)) return
   const win = BrowserWindow.getFocusedWindow()
   if (win) win.isMaximized() ? win.unmaximize() : win.maximize()
 })
@@ -1283,9 +1319,10 @@ ipcMain.on('window-close', event => {
   if (win) win.close()  // close() zamiast destroy() — daje czas na cleanup sesji/cache
 })
 
-ipcMain.handle('default-browser-is', () => _isDefaultBrowserAsync())
+ipcMain.handle('default-browser-is', event => trustedBrowserInterfaceSender(event) ? _isDefaultBrowserAsync() : false)
 
-ipcMain.handle('default-browser-set', async () => {
+ipcMain.handle('default-browser-set', async (event) => {
+  if (!trustedBrowserInterfaceSender(event)) return { registered: false, isDefault: false, platform: process.platform }
   const registered = _registerDefaultBrowserProtocols()
   if (process.platform === 'win32') {
     await _openWindowsDefaultBrowserSettings()
@@ -1296,7 +1333,7 @@ ipcMain.handle('default-browser-set', async () => {
   return { registered, isDefault: await _isDefaultBrowserAsync(), platform: process.platform }
 })
 
-ipcMain.handle('settings-load',  () => loadSettings())
+ipcMain.handle('settings-load',  e => trustedBrowserInterfaceSender(e) ? loadSettings() : {})
 ipcMain.handle('window-theme', (event, theme) => {
   if (!trustedBrowserInterfaceSender(event) || !['dark', 'light', 'private', 'transparent'].includes(theme)) return null
   const win = BrowserWindow.fromWebContents(event.sender)
@@ -1395,6 +1432,7 @@ ipcMain.handle('window-aero-regions', (event, layout) => {
   return true
 })
 ipcMain.handle('settings-save',  (e, data) => {
+  if (!trustedBrowserInterfaceSender(e)) return false
   if (!saveSettings(data)) return false
   if (data && typeof data.blockLocalIp === 'boolean') {
     const { webContents } = require('electron')
@@ -1415,17 +1453,18 @@ ipcMain.handle('settings-save',  (e, data) => {
   }
   return true
 })
-ipcMain.handle('bookmarks-load', () => loadBookmarks())
-ipcMain.handle('bookmarks-save', (e, data) => saveBookmarks(data))
+ipcMain.handle('bookmarks-load', e => trustedBrowserInterfaceSender(e) ? loadBookmarks() : [])
+ipcMain.handle('bookmarks-save', (e, data) => trustedBrowserInterfaceSender(e) && saveBookmarks(data))
 
-ipcMain.handle('history-load',   () => getHistoryCache())
-ipcMain.handle('history-add',    (e, entry) => { addHistoryEntry(entry); return true })
+ipcMain.handle('history-load',   e => trustedBrowserInterfaceSender(e) ? getHistoryCache() : [])
+ipcMain.handle('history-add',    (e, entry) => { if (!trustedBrowserInterfaceSender(e)) return false; addHistoryEntry(entry); return true })
 ipcMain.handle('history-delete', (e, timestamp) => {
+  if (!trustedBrowserInterfaceSender(e)) return false
   _historyCache = getHistoryCache().filter(h => h.timestamp !== timestamp)
   scheduleSaveHistory()
   return true
 })
-ipcMain.handle('history-clear',  () => { _historyCache = []; scheduleSaveHistory(); return true })
+ipcMain.handle('history-clear',  e => { if (!trustedBrowserInterfaceSender(e)) return false; _historyCache = []; scheduleSaveHistory(); return true })
 
 // ══════════════════════════════════════════════════════════════════════
 //  IMPORT Z INNYCH PRZEGLĄDAREK
@@ -1704,12 +1743,14 @@ async function _readSQLiteHistory(dbPath, isFirefox) {
   }
 }
 
-ipcMain.handle('browser-import-detect', () => {
+ipcMain.handle('browser-import-detect', e => {
+  if (!trustedBrowserInterfaceSender(e)) return []
   try { return _getBrowserPaths() } catch(e) { return [] }
 })
 
 ipcMain.handle('browser-import-run', async (e, opts) => {
   try {
+    if (!trustedBrowserInterfaceSender(e)) return { ok: false, error: 'bad_sender' }
     if (!opts || typeof opts !== 'object') return { ok: false, error: 'bad_args' }
     const { browserId, importBookmarks, importHistory } = opts
     if (typeof browserId !== 'string') return { ok: false, error: 'bad_args' }
@@ -1735,7 +1776,7 @@ ipcMain.handle('browser-import-run', async (e, opts) => {
         // Anuluj ewentualny debounce i zapisz synchronicznie —
         // import musi przeżyć zamknięcie okna tuż po kliknięciu "Importuj"
         if (_bookmarksSaveTimer) { clearTimeout(_bookmarksSaveTimer); _bookmarksSaveTimer = null }
-        try { fs.writeFileSync(bookmarksFile, JSON.stringify(merged, null, 2)) } catch(e) {}
+        store.write(bookmarksFile, merged, isBookmarks)
         importedBookmarks = newOnes.length
       }
     }
@@ -1749,7 +1790,7 @@ ipcMain.handle('browser-import-run', async (e, opts) => {
         const merged = [...current, ...newOnes]
         _bookmarksCache = merged
         if (_bookmarksSaveTimer) { clearTimeout(_bookmarksSaveTimer); _bookmarksSaveTimer = null }
-        try { fs.writeFileSync(bookmarksFile, JSON.stringify(merged, null, 2)) } catch(e) {}
+        store.write(bookmarksFile, merged, isBookmarks)
         importedBookmarks = newOnes.length
       }
     }
@@ -1793,17 +1834,18 @@ ipcMain.handle('browser-import-run', async (e, opts) => {
 
 // ── Niszczyciel Nitrix — permanentne czyszczenie danych ───────────────
 ipcMain.handle('nitrix-destroy', async (e, opts) => {
+  if (!trustedBrowserInterfaceSender(e)) return false
   if (!opts || typeof opts !== 'object') return false
 
   // 1. Historia — wyczyść cache i plik
   if (opts.clearHistory) {
     _historyCache = []
-    try { fs.writeFileSync(historyFile, '[]') } catch(err) { console.error('[Niszczyciel] historia:', err) }
+    store.write(historyFile, [], isHistory)
   }
 
   // 2. Zakładki — wyczyść plik
   if (opts.clearBookmarks) {
-    try { fs.writeFileSync(bookmarksFile, '[]') } catch(err) { console.error('[Niszczyciel] zakładki:', err) }
+    store.write(bookmarksFile, [], isBookmarks)
   }
 
   // 3. Dane sesji: cookies, localStorage, IndexedDB, itp.
@@ -1836,8 +1878,22 @@ ipcMain.handle('nitrix-destroy', async (e, opts) => {
 const passwordsFile = path.join(dataDir, 'passwords.enc')
 const pinFile       = path.join(dataDir, 'pin.enc')    // stary plik (backward compat + migracja)
 const pinHashFile   = path.join(dataDir, 'pin.hash')   // nowy bezpieczny plik z hashem
+for (const file of [passwordsFile, pinFile, pinHashFile]) {
+  try { if (fs.existsSync(file)) fs.chmodSync(file, 0o600) } catch {}
+}
 
+function safeStorageBackend() {
+  try { return require('electron').safeStorage.getSelectedStorageBackend?.() || '' } catch { return '' }
+}
 function safeAvailable() {
+  try {
+    const ss = require('electron').safeStorage
+    if (!ss.isEncryptionAvailable()) return false
+    // basic_text używa stałego klucza — to nie jest realne szyfrowanie.
+    return safeStorageBackend() !== 'basic_text'
+  } catch { return false }
+}
+function safeAvailableForRead() {
   try { return require('electron').safeStorage.isEncryptionAvailable() } catch { return false }
 }
 
@@ -1847,17 +1903,18 @@ function encryptStr(plain) {
       return require('electron').safeStorage.encryptString(plain).toString('base64')
     }
   } catch(e) {}
-  // fallback — base64 (nie jest szyfrowanie, ale lepsze niż plaintext)
-  return Buffer.from(plain, 'utf8').toString('base64')
+  // Brak klucza systemowego oznacza brak szyfrowania. Base64 nie jest szyfrowaniem,
+  // więc hasła nie są w tym trybie w ogóle zapisywane (patrz savePasswordsRaw).
+  return null
 }
 
 function decryptStr(stored) {
   try {
-    if (safeAvailable()) {
+    if (safeAvailableForRead()) {
       return require('electron').safeStorage.decryptString(Buffer.from(stored, 'base64'))
     }
   } catch(e) {}
-  // fallback
+  // Odczyt plików zapisanych starszą wersją (base64). Nowych tak już nie zapisujemy.
   return Buffer.from(stored, 'base64').toString('utf8')
 }
 
@@ -1874,9 +1931,12 @@ function loadPasswordsRaw() {
 
 function savePasswordsRaw(arr) {
   try {
-    const json = JSON.stringify(Array.isArray(arr) ? arr : [])
-    fs.writeFileSync(passwordsFile, encryptStr(json), 'utf8')
-    return true
+    const encrypted = encryptStr(JSON.stringify(Array.isArray(arr) ? arr : []))
+    if (!encrypted) {
+      console.error('[Passwords] safeStorage unavailable — refusing to store passwords without encryption')
+      return false
+    }
+    return _writePrivateFile(passwordsFile, encrypted)
   } catch(e) { return false }
 }
 
@@ -1905,7 +1965,7 @@ function savePinRaw(pin) {
   try {
     const salt = crypto.randomBytes(32).toString('hex')
     const hash = _hashPin(pin, salt)
-    fs.writeFileSync(pinHashFile, JSON.stringify({ v: 2, salt, hash }), 'utf8')
+    if (!_writePrivateFile(pinHashFile, JSON.stringify({ v: 2, salt, hash }))) return false
     // Usuń stary niezabezpieczony plik jeśli istnieje
     if (fs.existsSync(pinFile)) try { fs.unlinkSync(pinFile) } catch {}
     return true
@@ -1929,9 +1989,9 @@ function loadPinRaw() {
       const enc = fs.readFileSync(pinFile, 'utf8').trim()
       if (enc) {
         let plain = null
-        // Próbuj safeStorage
+        // Próbuj safeStorage (również dla starszych plików basic_text)
         try {
-          if (safeAvailable()) {
+          if (safeAvailableForRead()) {
             plain = require('electron').safeStorage.decryptString(Buffer.from(enc, 'base64'))
           }
         } catch {}
@@ -2042,7 +2102,8 @@ const passwordAccess = require('./browser-core')["password-access"].createPasswo
   trusted: trustedPasswordSender, hasPin: hasStoredPin, verifyPin: verifyPinRaw
 })
 ipcMain.handle('passwords-load', e => passwordAccess.allowed(e) ? loadPasswordsRaw() : null)
-ipcMain.handle('passwords-list', e => trustedPasswordSender(e)
+ipcMain.handle('passwords-access', e => passwordAccess.allowed(e))
+ipcMain.handle('passwords-list', e => passwordAccess.allowed(e)
   ? loadPasswordsRaw().map(({ site, user }) => ({ site, user })) : [])
 ipcMain.handle('passwords-save', (e, arr) => {
   if (!passwordAccess.allowed(e) || !Array.isArray(arr) || arr.length > 10000
@@ -2067,7 +2128,7 @@ ipcMain.handle('pin-clear', e => {
   return cleared
 })
 ipcMain.handle('pin-verify', (e, pin) => passwordAccess.verify(e, pin))
-ipcMain.handle('safe-storage-available', () => safeAvailable())
+ipcMain.handle('safe-storage-available', e => trustedBrowserInterfaceSender(e) && safeAvailable())
 
 // ── Koniec Menedżera Haseł ───────────────────────────────────────────
 const autofillPreferenceFile = path.join(dataDir, 'autofill-security.json')
@@ -2087,32 +2148,38 @@ require('./browser-core')["password-autofill"].registerAutofill({
   getContents: id => require('electron').webContents.fromId(id)
 })
 
+function _resolveDownloadsFile(filePath) {
+  if (typeof filePath !== 'string' || !filePath || filePath.includes('\0')) return null
+  try {
+    const downloads = fs.realpathSync(app.getPath('downloads'))
+    const resolved = fs.realpathSync(path.resolve(filePath))
+    if (resolved !== downloads && !resolved.startsWith(downloads + path.sep)) return null
+    return resolved
+  } catch { return null }
+}
+
 ipcMain.handle('open-file', (e, filePath) => {
-  if (!filePath) return false
-  const resolved  = path.resolve(filePath)
-  const downloads = path.resolve(app.getPath('downloads'))
-  if (!resolved.startsWith(downloads + path.sep) && resolved !== downloads) return false
+  if (!trustedBrowserInterfaceSender(e)) return false
+  const resolved = _resolveDownloadsFile(filePath)
+  if (!resolved) return false
   shell.openPath(resolved)
   return true
 })
 
 // ── Pokaż plik w eksploratorze ────────────────────────────────────
 ipcMain.handle('show-in-folder', (e, filePath) => {
-  if (!filePath) return false
-  const resolved  = path.resolve(filePath)
-  const downloads = path.resolve(app.getPath('downloads'))
-  if (!resolved.startsWith(downloads + path.sep) && resolved !== downloads) return false
+  if (!trustedBrowserInterfaceSender(e)) return false
+  const resolved = _resolveDownloadsFile(filePath)
+  if (!resolved) return false
   shell.showItemInFolder(resolved)
   return true
 })
 
 // ── Sprawdź plik — tylko folder pobrań ───────────────────────────
 ipcMain.handle('file-exists', (e, filePath) => {
-  if (!filePath) return { exists: false, mtimeMs: 0 }
-  const resolved  = path.resolve(filePath)
-  const downloads = path.resolve(app.getPath('downloads'))
-  if (!resolved.startsWith(downloads + path.sep) && resolved !== downloads)
-    return { exists: false, mtimeMs: 0 }
+  if (!trustedBrowserInterfaceSender(e)) return { exists: false, mtimeMs: 0 }
+  const resolved = _resolveDownloadsFile(filePath)
+  if (!resolved) return { exists: false, mtimeMs: 0 }
   try {
     const stat = fs.statSync(resolved)
     return { exists: true, mtimeMs: stat.mtimeMs }
@@ -2120,9 +2187,15 @@ ipcMain.handle('file-exists', (e, filePath) => {
 })
 
 // ── Zapisz stronę / obraz ────────────────────────────────────────
-ipcMain.handle('save-page', async (e, { webContentsId, title, url, context, pageUrl }) => {
-  const { webContents, net } = require('electron')
-  const wc = webContents.fromId(webContentsId)
+// Limit pamięci dla zapisów obrazów (blob:/http) — main process nie może
+// wciągnąć do RAM dowolnie dużego pliku wskazanego przez stronę.
+const MAX_SAVE_BYTES = 64 * 1024 * 1024
+ipcMain.handle('save-page', async (e, payload) => {
+  if (!payload || typeof payload !== 'object') return false
+  const { webContentsId, title, url, context, pageUrl } = payload
+  const { net } = require('electron')
+  // Tylko webview należący do tego okna — nigdy dowolny webContents.
+  const wc = getOwnedWebview(e, webContentsId)
   if (!wc) return false
 
   const win = BrowserWindow.fromWebContents(e.sender) || BrowserWindow.getFocusedWindow()
@@ -2199,7 +2272,9 @@ ipcMain.handle('save-page', async (e, { webContentsId, title, url, context, page
       if (isDataUrl) {
         const base64Match = url.match(/^data:[^;]+;base64,(.+)$/)
         if (!base64Match) throw new Error('Nieprawidłowy data URL')
+        if (base64Match[1].length > Math.ceil(MAX_SAVE_BYTES * 4 / 3) + 8) throw new Error('DATA_TOO_LARGE')
         const buf = Buffer.from(base64Match[1], 'base64')
+        if (buf.length > MAX_SAVE_BYTES) throw new Error('DATA_TOO_LARGE')
         fs.writeFileSync(filePath, buf)
         send('download-done', { id: dlId, filename, state: 'completed', savePath: filePath, totalBytes: buf.length })
         shell.showItemInFolder(filePath)
@@ -2214,6 +2289,7 @@ ipcMain.handle('save-page', async (e, { webContentsId, title, url, context, page
             fetch(${JSON.stringify(url)})
               .then(r => r.blob())
               .then(blob => {
+                if (blob.size > ${MAX_SAVE_BYTES}) { reject(new Error('BLOB_TOO_LARGE')); return }
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result.split(',')[1])
                 reader.onerror = reject
@@ -2222,7 +2298,10 @@ ipcMain.handle('save-page', async (e, { webContentsId, title, url, context, page
               .catch(reject)
           })
         `)
+        if (typeof base64 !== 'string' || base64.length === 0) throw new Error('BLOB_EMPTY')
+        if (base64.length > Math.ceil(MAX_SAVE_BYTES * 4 / 3) + 8) throw new Error('BLOB_TOO_LARGE')
         const buf = Buffer.from(base64, 'base64')
+        if (buf.length > MAX_SAVE_BYTES) throw new Error('BLOB_TOO_LARGE')
         fs.writeFileSync(filePath, buf)
         send('download-done', { id: dlId, filename, state: 'completed', savePath: filePath, totalBytes: buf.length })
         shell.showItemInFolder(filePath)
@@ -2236,9 +2315,21 @@ ipcMain.handle('save-page', async (e, { webContentsId, title, url, context, page
         let received = 0
         req.on('response', (resp) => {
           const total = parseInt(resp.headers['content-length'] || '0', 10) || 0
+          if (total > MAX_SAVE_BYTES) {
+            try { req.abort() } catch {}
+            send('download-done', { id: dlId, filename, state: 'interrupted', savePath: filePath, totalBytes: 0 })
+            resolve(false)
+            return
+          }
           resp.on('data', (chunk) => {
-            chunks.push(chunk)
             received += chunk.length
+            if (received > MAX_SAVE_BYTES) {
+              try { req.abort() } catch {}
+              send('download-done', { id: dlId, filename, state: 'interrupted', savePath: filePath, totalBytes: 0 })
+              resolve(false)
+              return
+            }
+            chunks.push(chunk)
             send('download-progress', { id: dlId, filename, receivedBytes: received, totalBytes: total, speed: 0 })
           })
           resp.on('end', () => {
@@ -2329,11 +2420,11 @@ async function getCachedMetrics() {
 }
 
 ipcMain.handle('get-ram-usage', async (e, webContentsId) => {
+  if (!trustedBrowserInterfaceSender(e)) return { mb: null }
   try {
     const all = await getCachedMetrics()
     if (webContentsId != null) {
-      const { webContents } = require('electron')
-      const wc = webContents.fromId(webContentsId)
+      const wc = getOwnedWebview(e, webContentsId)
       if (wc) {
         const pid = wc.getOSProcessId()
         const proc = all.find(p => p.pid === pid)
@@ -2357,21 +2448,25 @@ const activeDownloads = new Map()  // dlId → DownloadItem
 
 // ── Sterowanie pobieraniem z renderer procesu ──────────────────────
 ipcMain.on('download-pause', (e, id) => {
+  if (!trustedBrowserInterfaceSender(e)) return
   const item = activeDownloads.get(id)
   if (item && !item.isPaused()) item.pause()
 })
 
 ipcMain.on('download-resume', (e, id) => {
+  if (!trustedBrowserInterfaceSender(e)) return
   const item = activeDownloads.get(id)
   if (item && item.canResume()) item.resume()
 })
 
 ipcMain.on('download-cancel', (e, id) => {
+  if (!trustedBrowserInterfaceSender(e)) return
   const item = activeDownloads.get(id)
   if (item) { item.cancel(); activeDownloads.delete(id) }
 })
 
 ipcMain.on('is-online-sync', (e) => {
+  if (!trustedBrowserInterfaceSender(e)) { e.returnValue = false; return }
   e.returnValue = net.isOnline()
 })
 
@@ -2603,10 +2698,14 @@ const AD_BLOCK_DOMAINS = new Set([
 // Klucz: webContentsId webviewu, wartość: Boolean (true = włączony, domyślnie true)
 const adblockEnabledMap = new Map()
 
-ipcMain.on('adblock-set-tab', (e, { webContentsId, enabled }) => {
-  if (typeof webContentsId === 'number' && typeof enabled === 'boolean') {
-    adblockEnabledMap.set(webContentsId, enabled)
-  }
+ipcMain.on('adblock-set-tab', (e, payload) => {
+  if (!payload || typeof payload !== 'object') return
+  const { webContentsId, enabled } = payload
+  if (typeof enabled !== 'boolean') return
+  // Tylko webview należący do okna nadawcy może zmienić własny stan adblockera.
+  const target = getOwnedWebview(e, webContentsId)
+  if (!target) return
+  adblockEnabledMap.set(target.id, enabled)
 })
 
 // Puste fałszywe odpowiedzi per typ zasobu — strona widzi "pusta odpowiedź" zamiast błędu sieciowego
@@ -2785,6 +2884,30 @@ function certCacheSet(hostname, value) {
   certCache.set(hostname, value)
 }
 
+function _isLocalOrPrivateHost(hostname) {
+  const host = String(hostname || '').toLowerCase().replace(/\.$/, '')
+  if (!host) return true
+  if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal')) return true
+  const version = require('node:net').isIP(host)
+  if (version === 4) {
+    const p = host.split('.').map(Number)
+    return p[0] === 0 || p[0] === 10 || p[0] === 127
+      || (p[0] === 100 && p[1] >= 64 && p[1] <= 127)
+      || (p[0] === 169 && p[1] === 254)
+      || (p[0] === 172 && p[1] >= 16 && p[1] <= 31)
+      || (p[0] === 192 && p[1] === 168)
+  }
+  if (version === 6) {
+    // IPv4-mapped IPv6 (np. ::ffff:127.0.0.1) musi być sprawdzony jak IPv4.
+    const mapped = host.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/)
+    if (mapped) return _isLocalOrPrivateHost(mapped[1])
+    return host === '::' || host === '::1' || host.startsWith('fc') || host.startsWith('fd')
+      || host.startsWith('fe8') || host.startsWith('fe9') || host.startsWith('fea') || host.startsWith('feb')
+      || host.startsWith('ff')
+  }
+  return false
+}
+
 function _certificatePrincipal(principal = {}) {
   const toArray = (value) => value == null ? [] : (Array.isArray(value) ? value : [value])
   return {
@@ -2797,7 +2920,7 @@ function _certificatePrincipal(principal = {}) {
   }
 }
 
-function _readVerifiedCertificate(hostname) {
+function _readVerifiedCertificate(hostname, port = 443, address = null) {
   return new Promise((resolve) => {
     let settled = false
     const finish = (value) => {
@@ -2807,8 +2930,8 @@ function _readVerifiedCertificate(hostname) {
     }
 
     const socket = tls.connect({
-      host: hostname,
-      port: 443,
+      host: address || hostname,
+      port,
       servername: hostname,
       rejectUnauthorized: true,
       ALPNProtocols: ['h2', 'http/1.1'],
@@ -2855,11 +2978,23 @@ function _readVerifiedCertificate(hostname) {
   })
 }
 
-ipcMain.handle('get-cert-info', async (_event, hostname) => {
+ipcMain.handle('get-cert-info', async (event, hostname, port = 443) => {
+  if (!trustedBrowserInterfaceSender(event)) return null
   if (typeof hostname !== 'string' || !/^(?=.{1,253}$)(?!-)[a-z0-9.-]+(?<!-)$/i.test(hostname)) return null
-  if (certCache.has(hostname)) return certCache.get(hostname)
-  const info = await _readVerifiedCertificate(hostname)
-  if (info) certCacheSet(hostname, info)
+  if (!Number.isInteger(port) || port < 1 || port > 65535) return null
+  if (_isLocalOrPrivateHost(hostname)) return null
+  const host = hostname.toLowerCase()
+  // Rozwiąż nazwę raz i połącz się z konkretnym publicznym adresem.
+  // Sam test nazwy nie wystarcza — DNS może wskazać 127.0.0.1 lub sieć wewnętrzną.
+  let addresses
+  try { addresses = await require('node:dns').promises.lookup(host, { all: true, verbatim: true }) }
+  catch { return null }
+  const address = addresses.find(entry => !_isLocalOrPrivateHost(entry.address))
+  if (!address) return null
+  const cacheKey = `${host}:${port}`
+  if (certCache.has(cacheKey)) return certCache.get(cacheKey)
+  const info = await _readVerifiedCertificate(host, port, address.address)
+  if (info) certCacheSet(cacheKey, info)
   return info
 })
 
@@ -2869,10 +3004,12 @@ function createWindow(isPrivate = false, initialUrl = null) {
   if (isPrivate) additionalArguments.push('--nitrix-private')
   if (initialUrl) additionalArguments.push(`--nitrix-initial-url=${Buffer.from(initialUrl, 'utf8').toString('base64url')}`)
 
-  // Tryb prywatny — unikalna sesja in-memory, bez żadnej persystencji
-  const sessionPartition = isPrivate
-    ? `private:${Date.now()}`   // bez 'persist:' → tylko RAM, kasowana przy zamknięciu
-    : 'persist:main'
+  // Tryb prywatny — jedna współdzielona sesja, dokładnie ta sama, której używają
+  // webview ('persist:nitrix_private' — wbudowany PDF viewer Chromium wymaga
+  // persist). Dzięki temu preloady, adblock i uprawnienia trafiają we właściwą
+  // partycję. Prywatność zapewnia czyszczenie danych przy pierwszym otwarciu
+  // i po zamknięciu ostatniego okna prywatnego.
+  const sessionPartition = isPrivate ? 'persist:nitrix_private' : 'persist:main'
 
   const transparentSurface = settings.theme === 'transparent' || isPrivate || nativeAeroBackend
   const win = new BrowserWindow({
@@ -3178,16 +3315,6 @@ function createWindow(isPrivate = false, initialUrl = null) {
     }
   }
 
-  // Tryb prywatny — wyłącz cache i cookies całkowicie
-  if (isPrivate) {
-    wvSession.clearStorageData()
-    wvSession.setPermissionRequestHandler((webContents, permission, callback) => {
-      // Zezwól na podstawowe uprawnienia, blokuj śledzące
-      const allowed = ['media', 'geolocation', 'notifications', 'fullscreen', 'pointerLock']
-      callback(allowed.includes(permission))
-    })
-  }
-
   if (!isPrivate) {
     const topDomains = [
       'https://www.google.pl', 'https://www.google.com',
@@ -3201,31 +3328,21 @@ function createWindow(isPrivate = false, initialUrl = null) {
   setupDownloadHandling(win, wvSession)
   _startNetworkPolling(win)
 
-  // W trybie prywatnym webview używa sesji 'persist:nitrix_private'
-  // (persist zamiast in-memory — inaczej wbudowany PDF viewer Chromium nie działa).
-  // Prywatność zapewnia clearStorageData() przy każdym otwarciu i zamknięciu okna.
+  // Sesja prywatna to już ta sama sesja co webview, więc nie rejestrujemy tu
+  // drugi raz webRequest ani will-download — zrobiłoby to podwójnie.
   if (isPrivate) {
-    const wvPrivateSession = session.fromPartition('persist:nitrix_private')
-
     // Wyczyść dane z poprzedniej sesji prywatnej
     if (browserFeatures.privateWindowCount() === 1) {
-      wvPrivateSession.clearStorageData()
-      wvPrivateSession.clearCache()
-      wvPrivateSession.clearAuthCache()
+      wvSession.clearStorageData()
+      wvSession.clearCache()
+      wvSession.clearAuthCache()
     }
-
-    blockUnsafeNavigation(wvPrivateSession)
-    applyIsolationHeaders(wvPrivateSession)
-
-    // Each window removes only its own download handler.
-    setupDownloadHandling(win, wvPrivateSession)
-
     // Sprzątanie przy zamknięciu — usuń wszelkie pozostałości
     win.on('closed', () => {
       if (browserFeatures.privateWindowCount() > 0) return
-      wvPrivateSession.clearStorageData()
-      wvPrivateSession.clearCache()
-      wvPrivateSession.clearAuthCache()
+      wvSession.clearStorageData()
+      wvSession.clearCache()
+      wvSession.clearAuthCache()
     })
   }
 }
@@ -3252,6 +3369,10 @@ app.on('second-instance', (_event, argv) => {
 
 // ── Strona blokady adblock — używana przez oba handlery nitrix-block:// ──
 function buildBlockedHtml(domain) {
+  // ?d= pochodzi z adresu URL, więc renderujemy wyłącznie poprawną nazwę hosta
+  // i dodatkowo ją escapujemy — spreparowana wartość nie może wstrzyknąć
+  // znaczników do tego uprzywilejowanego originu (nitrix-block:// jest secure).
+  const safeDomain = normalizeBlockedDomain(domain)
   return `<!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -3286,14 +3407,14 @@ code{font-family:monospace;background:#f1f3f4;border-radius:4px;padding:1px 6px;
     <div class="heading">
       <h1>Ta strona jest zablokowana</h1>
       <p>Nitrix Adblock uniemożliwił dostęp do tej strony na podstawie Twoich własnych filtrów.</p>
-      <div class="domain-tag">${domain || 'nieznana domena'}</div>
+      <div class="domain-tag">${escapeHtml(safeDomain) || 'nieznana domena'}</div>
     </div>
   </div>
   <hr>
   <div class="details">
     <p><strong>Jak odblokować tę stronę?</strong></p>
     <p>Otwórz ustawienia Adblock → <strong>Moje Filtry</strong> i usuń regułę:<br>
-    <code>||${domain}^</code></p>
+    <code>||${escapeHtml(safeDomain)}^</code></p>
   </div>
   <div class="err-code">NITRIX_ADBLOCK_BLOCKED</div>
 </div>
@@ -3405,14 +3526,14 @@ app.on('web-contents-created', (e, wc) => {
   _applyLocalIpProtection(wc, loadSettings().blockLocalIp !== false)
 
   wc.setWindowOpenHandler(({ url }) => {
-    if (!url || url === 'about:blank') return { action: 'deny' }
-    const targetUrl = /^https?:\/\//i.test(url) ? url : _normalizeLaunchFileTarget(url)
-    if (!targetUrl) return { action: 'deny' }
-    // Wyślij do okna które jest właścicielem tego webContents
-    const win = BrowserWindow.fromWebContents(wc)
-      ?? BrowserWindow.getFocusedWindow()
-      ?? BrowserWindow.getAllWindows()[0]
-    if (win && !win.isDestroyed()) win.webContents.send('open-in-new-tab', targetUrl)
+    // Z treści strony otwieramy wyłącznie zwykłe strony. Lokalne pliki,
+    // UNC i inne schematy są otwierane tylko przez jawny dialog użytkownika.
+    if (!url || !/^https?:\/\//i.test(url)) return { action: 'deny' }
+    const host = wc.hostWebContents
+    const win = host && !host.isDestroyed()
+      ? BrowserWindow.fromWebContents(host)
+      : BrowserWindow.fromWebContents(wc)
+    if (win && !win.isDestroyed()) win.webContents.send('open-in-new-tab', url)
     return { action: 'deny' }
   })
   wc.on('did-finish-load', () => {
@@ -3514,7 +3635,8 @@ function setupAutoUpdater() {
   })
 
   // Renderer prosi o rozpoczęcie pobierania
-  ipcMain.on('update-download-now', () => {
+  ipcMain.on('update-download-now', (event) => {
+    if (!trustedBrowserInterfaceSender(event)) return
     autoUpdater.downloadUpdate().catch(err => {
       getWin()?.webContents.send('update-status', {
         status: 'error',
@@ -3524,12 +3646,14 @@ function setupAutoUpdater() {
   })
 
   // Renderer prosi o restart i instalację
-  ipcMain.on('update-install-now', () => {
+  ipcMain.on('update-install-now', (event) => {
+    if (!trustedBrowserInterfaceSender(event)) return
     autoUpdater.quitAndInstall(false, true)
   })
 
   // Renderer odrzucił aktualizację — nie pokazuj w tej sesji
-  ipcMain.on('update-dismiss', () => {
+  ipcMain.on('update-dismiss', (event) => {
+    if (!trustedBrowserInterfaceSender(event)) return
     updateDismissed = true
   })
 

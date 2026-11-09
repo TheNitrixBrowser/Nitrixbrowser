@@ -1,6 +1,6 @@
 {
   "name": "Nitrix",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Nitrix web browser",
   "desktopName": "com.nitrix.browser",
   "main": "main.js",
@@ -17,13 +17,17 @@
   },
   "build": {
     "beforePack": "build/prepare-ocr.js",
-    "asarUnpack": ["node_modules/**", "assets/ocr/**"],
+    "asarUnpack": [
+      "node_modules/**",
+      "assets/ocr/**"
+    ],
     "afterPack": "build/after-pack.js",
     "appId": "com.nitrix.browser",
     "productName": "Nitrix",
     "win": {
       "target": "nsis",
       "icon": "icon.ico",
+      "forceCodeSigning": "false",
       "artifactName": "Nitrix-Setup-${version}-${arch}.${ext}"
     },
     "linux": {
@@ -65,12 +69,20 @@
       "build/icon.png",
       "!dane_przegladarki/**"
     ],
-    "publish": {
-      "provider": "github",
-      "owner": "TheNitrixBrowser",
-      "repo": "autoaktualizacjenitrix",
-      "private": false
-    }
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "TheNitrixBrowser",
+        "repo": "Nitrixbrowser",
+        "private": false
+      },
+      {
+        "provider": "github",
+        "owner": "TheNitrixBrowser",
+        "repo": "autoaktualizacjenitrix",
+        "private": false
+      }
+    ]
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -80,7 +92,12 @@
   "devDependencies": {
     "@tesseract.js-data/eng": "1.0.0",
     "@tesseract.js-data/pol": "1.0.0",
-    "electron": "44.2.0",
+    "electron": "44.10.2",
     "electron-builder": "^26.15.3"
-  }
+  },
+  "overrides": {
+    "minimatch@^9.0.0": "11.0.5",
+    "minimatch@^10.0.0": "11.0.5"
+  },
+  "author": "Nitrix"
 }

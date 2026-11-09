@@ -231,9 +231,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   dismissUpdate:  () => ipcRenderer.send('update-dismiss'),
 
   // ── Certyfikat ──
-  getCertInfo: (hostname) => {
+  getCertInfo: (hostname, port = 443) => {
     if (!isSafeHostname(hostname)) return Promise.resolve(null)
-    return ipcRenderer.invoke('get-cert-info', hostname)
+    if (!Number.isInteger(port) || port < 1 || port > 65535) return Promise.resolve(null)
+    return ipcRenderer.invoke('get-cert-info', hostname, port)
   },
 
   // ── RAM ──
@@ -289,6 +290,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // ── Menedżer haseł ──
   passwordsLoad:          ()       => ipcRenderer.invoke('passwords-load'),
+  passwordsAccess:        ()       => ipcRenderer.invoke('passwords-access'),
   passwordsList:          ()       => ipcRenderer.invoke('passwords-list'),
   passwordsLock:          ()       => ipcRenderer.invoke('passwords-lock'),
   autofillSkipGet:        ()       => ipcRenderer.invoke('passwords-autofill-skip-get'),

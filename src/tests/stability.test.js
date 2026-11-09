@@ -159,7 +159,7 @@ test('renderer integrity matches CSP and script tag; versions agree', () => {
   assert.equal(hashes.filter(h => h === featureHash).length, 2)
   const pkg = require('../package.json')
   const lock = require('../package-lock.json')
-  assert.equal(pkg.version, '2.1.0')
+  assert.equal(pkg.version, '2.1.1')
   assert.equal(lock.version, pkg.version)
   assert.equal(lock.packages[''].version, pkg.version)
 })

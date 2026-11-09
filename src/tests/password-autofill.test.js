@@ -11,7 +11,14 @@ function fixture() {
   let preference = { enabled: false, pin: '' }, pin = 'synthetic-pin', fills = 0
   const access = createPasswordAccess({ trusted: e => e === event, hasPin: () => true, verifyPin: p => p === '1234' })
   const target = { isDestroyed: () => false, getType: () => 'webview', hostWebContents: event.sender,
-    getURL: () => 'https://example.test/login', executeJavaScript: async () => { fills++; return true } }
+    getURL: () => 'https://example.test/login',
+    executeJavaScript: async () => { throw Error('autofill must never run in the page world') },
+    executeJavaScriptInIsolatedWorld: async (world, scripts) => {
+      assert.ok(world > 0)
+      assert.ok(scripts[0].code.includes('SYNTHETIC-ONLY'))
+      fills++
+      return true
+    } }
   registerAutofill({ ipcMain: { handle: (name, fn) => handlers.set(name, fn) }, trusted: e => e === event,
     access, hasPin: () => true, fingerprint: () => pin, readPreference: () => preference,
     writePreference: value => { preference = value; return true }, getContents: () => target,
@@ -72,9 +79,9 @@ test('fills matching-origin child frame and skips unrelated frames', async () =>
   f.access.verify(f.event, '1234')
   const called = []
   f.target.mainFrame = { framesInSubtree: [
-    { url: 'https://example.test', executeJavaScript: async () => { called.push('main'); return false } },
-    { url: 'https://other.test', executeJavaScript: async () => { throw Error('Credentials sent to wrong origin') } },
-    { url: 'https://example.test/form', executeJavaScript: async () => { called.push('form'); return true } }
+    { url: 'https://example.test', executeJavaScriptInIsolatedWorld: async () => { called.push('main'); return false } },
+    { url: 'https://other.test', executeJavaScriptInIsolatedWorld: async () => { throw Error('Credentials sent to wrong origin') } },
+    { url: 'https://example.test/form', executeJavaScriptInIsolatedWorld: async () => { called.push('form'); return true } }
   ] }
   assert.equal(await f.call('passwords-autofill', f.request), true)
   assert.deepEqual(called, ['main', 'form'])
@@ -84,11 +91,11 @@ test('stops filling frames after top-level navigation', async () => {
   const f = fixture()
   f.access.verify(f.event, '1234')
   f.target.mainFrame = { framesInSubtree: [
-    { url: 'https://example.test', executeJavaScript: async () => {
+    { url: 'https://example.test', executeJavaScriptInIsolatedWorld: async () => {
       f.target.getURL = () => 'https://other.test'
       return false
     } },
-    { url: 'https://example.test/form', executeJavaScript: async () => { throw Error('Filled after navigation') } }
+    { url: 'https://example.test/form', executeJavaScriptInIsolatedWorld: async () => { throw Error('Filled after navigation') } }
   ] }
   assert.equal(await f.call('passwords-autofill', f.request), false)
 })
@@ -100,8 +107,9 @@ test('Librus portal fills only its Synergia login frame on the login route', asy
   const target = { isDestroyed: () => false, getType: () => 'webview', hostWebContents: event.sender,
     getURL: () => 'https://portal.librus.pl/rodzina/synergia/loguj',
     mainFrame: { framesInSubtree: [
-      { url: 'https://synergia.librus.pl/login', executeJavaScript: async script => {
-        assert.ok(script.includes('"https://synergia.librus.pl"'))
+      { url: 'https://synergia.librus.pl/login', executeJavaScriptInIsolatedWorld: async (world, scripts) => {
+        assert.equal(world, 1106)
+        assert.ok(scripts[0].code.includes('"https://synergia.librus.pl"'))
         calls++; return true
       } }
     ] } }
@@ -113,8 +121,9 @@ test('Librus portal fills only its Synergia login frame on the login route', asy
   assert.equal(await fill(),true)
   target.mainFrame.framesInSubtree[0] = {
     url: 'https://api.librus.pl/OAuth/Authorization?client_id=46&response_type=code&scope=mydata',
-    executeJavaScript: async script => {
-      assert.ok(script.includes('"https://api.librus.pl"'))
+    executeJavaScriptInIsolatedWorld: async (world, scripts) => {
+      assert.equal(world, 1106)
+      assert.ok(scripts[0].code.includes('"https://api.librus.pl"'))
       calls++; return true
     }
   }

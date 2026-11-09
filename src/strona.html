@@ -194,6 +194,10 @@
     <section class="section" id="version-picker">
       <h2 data-i18n="versions">Wersje</h2>
       <div class="version-list">
+        <button class="version-btn" data-version-target="changes-211">
+          <span>Nitrix 2.1.1</span>
+          <span class="version-date" data-i18n="changelog">lista zmian</span>
+        </button>
         <button class="version-btn" data-version-target="changes-210">
           <span>Nitrix 2.1.0</span>
           <span class="version-date" data-i18n="changelog">lista zmian</span>
@@ -206,6 +210,36 @@
           <span>Nitrix 2.0.0</span>
           <span class="version-date" data-i18n="changelog">lista zmian</span>
         </button>
+      </div>
+    </section>
+
+    <section class="section changes" id="changes-211">
+      <button class="back-btn" data-back-target="version-picker" data-i18n="back">Wróć do wersji</button>
+      <h2>Nitrix 2.1.1 · Windows / Linux</h2>
+
+      <div class="change">
+        <div class="change-title" data-i18n="manager_211_title">Ochrona menedżera haseł</div>
+        <p class="change-desc" data-i18n="manager_211_desc">Lista stron i loginów, same hasła, ich zapisywanie i usuwanie oraz zmiana PIN-u wymagają teraz odblokowanego menedżera. Odblokowanie wygasa po minucie bezczynności i jest unieważniane po zmianie PIN-u. Bez ustawionego PIN-u dostęp ma wyłącznie interfejs Nitrixa: żadna strona, żadna ramka i żadne obce okno. Hasła i hash PIN-u zapisują się w całości albo wcale.</p>
+      </div>
+
+      <div class="change">
+        <div class="change-title" data-i18n="autofill_211_title">Autouzupełnianie haseł</div>
+        <p class="change-desc" data-i18n="autofill_211_desc">Uzupełnianie działa w izolowanym środowisku strony i tylko na tym samym adresie, dla którego zapisano hasło. Inna domena, protokół lub port są odrzucane. Obsługuje formularze w ramkach oraz logowanie Librus i Synergii. Wypełnianie zatrzymuje się, jeśli strona zdąży przejść pod inny adres. Włączenie pomijania PIN-u wymaga PIN-u i nie zostawia menedżera odblokowanego.</p>
+      </div>
+
+      <div class="change">
+        <div class="change-title" data-i18n="ui_security_211_title">Bezpieczeństwo interfejsu</div>
+        <p class="change-desc" data-i18n="ui_security_211_desc">Okna otwierane przez stronę muszą być adresami http lub https i trafiają do okna, z którego pochodzą. Otwieranie lokalnych plików odrzuca ścieżki sieciowe i adresy typu file://host. Informacje o certyfikacie są dostępne tylko dla interfejsu Nitrixa i nie mogą posłużyć do odpytywania adresów lokalnych. Nazwy domen, pól certyfikatu i reguł blokowania są czyszczone przed wyświetleniem, więc nie mogą wstawić kodu do interfejsu. Wzmocniono politykę CSP i wyłączono automatyczne przyznawanie blokady wskaźnika oraz zapisu do schowka.</p>
+      </div>
+
+      <div class="change">
+        <div class="change-title" data-i18n="storage_211_title">Bezpieczniejszy zapis danych</div>
+        <p class="change-desc" data-i18n="storage_211_desc">Uszkodzony plik danych jest odkładany jako kopia .recovery zamiast po cichu nadpisany, a zbyt duże pliki nie są wczytywane. Zapis idzie przez plik tymczasowy, który jest sprzątany także przy błędzie. Historia mieści 5000 wpisów, a oczekujące zmiany zakładek i historii są zapisywane przy zamykaniu przeglądarki.</p>
+      </div>
+
+      <div class="change">
+        <div class="change-title" data-i18n="stability_211_title">Stabilność</div>
+        <p class="change-desc" data-i18n="stability_211_desc">Interfejs po awarii restartuje się ograniczoną liczbę razy, a timery są zwalniane przy zamykaniu okna. Pamięć na ikony stron jest ograniczona, a import bardzo głęboko zagnieżdżonych folderów zakładek nie wywraca już przeglądarki.</p>
       </div>
     </section>
 
@@ -441,7 +475,17 @@
         addressbar_title: 'Naprawiono błędy paska adresu i wyszukiwania',
         addressbar_desc: 'Poprawiono kilka problemów, przez które pasek adresu mógł pokazywać poprzedni wpis, gubić adres file:// albo zachowywać się dziwnie po kliknięciu poza polem. Dodano też wiele innych drobnych poprawek.',
         whatsnew_title: 'Co Nowego?',
-        whatsnew_desc: 'Dodano prosty panel z listą zmian w wybranej wersji Nitrix.'
+        whatsnew_desc: 'Dodano prosty panel z listą zmian w wybranej wersji Nitrix.',
+        manager_211_title: 'Ochrona menedżera haseł',
+        manager_211_desc: 'Lista stron i loginów, same hasła, ich zapisywanie i usuwanie oraz zmiana PIN-u wymagają teraz odblokowanego menedżera. Odblokowanie wygasa po minucie bezczynności i jest unieważniane po zmianie PIN-u. Bez ustawionego PIN-u dostęp ma wyłącznie interfejs Nitrixa: żadna strona, żadna ramka i żadne obce okno. Hasła i hash PIN-u zapisują się w całości albo wcale.',
+        autofill_211_title: 'Autouzupełnianie haseł',
+        autofill_211_desc: 'Uzupełnianie działa w izolowanym środowisku strony i tylko na tym samym adresie, dla którego zapisano hasło. Inna domena, protokół lub port są odrzucane. Obsługuje formularze w ramkach oraz logowanie Librus i Synergii. Wypełnianie zatrzymuje się, jeśli strona zdąży przejść pod inny adres. Włączenie pomijania PIN-u wymaga PIN-u i nie zostawia menedżera odblokowanego.',
+        ui_security_211_title: 'Bezpieczeństwo interfejsu',
+        ui_security_211_desc: 'Okna otwierane przez stronę muszą być adresami http lub https i trafiają do okna, z którego pochodzą. Otwieranie lokalnych plików odrzuca ścieżki sieciowe i adresy typu file://host. Informacje o certyfikacie są dostępne tylko dla interfejsu Nitrixa i nie mogą posłużyć do odpytywania adresów lokalnych. Nazwy domen, pól certyfikatu i reguł blokowania są czyszczone przed wyświetleniem, więc nie mogą wstawić kodu do interfejsu. Wzmocniono politykę CSP i wyłączono automatyczne przyznawanie blokady wskaźnika oraz zapisu do schowka.',
+        storage_211_title: 'Bezpieczniejszy zapis danych',
+        storage_211_desc: 'Uszkodzony plik danych jest odkładany jako kopia .recovery zamiast po cichu nadpisany, a zbyt duże pliki nie są wczytywane. Zapis idzie przez plik tymczasowy, który jest sprzątany także przy błędzie. Historia mieści 5000 wpisów, a oczekujące zmiany zakładek i historii są zapisywane przy zamykaniu przeglądarki.',
+        stability_211_title: 'Stabilność',
+        stability_211_desc: 'Interfejs po awarii restartuje się ograniczoną liczbę razy, a timery są zwalniane przy zamykaniu okna. Pamięć na ikony stron jest ograniczona, a import bardzo głęboko zagnieżdżonych folderów zakładek nie wywraca już przeglądarki.'
       },
       en: {
         page_title: "What's New? - Nitrix",
@@ -509,7 +553,17 @@
         addressbar_title: 'Fixed address and search bar bugs',
         addressbar_desc: 'Fixed several issues where the address bar could show a previous entry, lose file:// addresses, or behave oddly after clicking away. Many other small fixes were added too.',
         whatsnew_title: "What's New?",
-        whatsnew_desc: 'Added a simple panel with a changelog for the selected Nitrix version.'
+        whatsnew_desc: 'Added a simple panel with a changelog for the selected Nitrix version.',
+        manager_211_title: 'Password manager protection',
+        manager_211_desc: 'The list of sites and logins, the passwords themselves, saving and deleting them, and changing the PIN now require an unlocked password manager. Unlocking expires after a minute of inactivity and is revoked when the PIN changes. With no PIN set, only the Nitrix interface has access: no website, no frame and no other window. Passwords and the PIN hash are written as a whole or not at all.',
+        autofill_211_title: 'Password autofill',
+        autofill_211_desc: 'Autofill runs in the page isolated world and only on the exact address the password was saved for. A different domain, protocol or port is rejected. It handles forms inside frames and sign-in on Librus and Synergia. Filling stops if the page navigates elsewhere in the meantime. Turning on PIN skipping requires the PIN and does not leave the manager unlocked.',
+        ui_security_211_title: 'Interface security',
+        ui_security_211_desc: 'Windows opened by a page must be http or https addresses and always belong to the window they came from. Opening local files rejects network paths and file://host addresses. Certificate details are available only to the Nitrix interface and cannot be used to query local addresses. Domain names, certificate fields and blocking rules are escaped before display, so they cannot inject code into the interface. The CSP was tightened and pointer lock and clipboard writes are no longer granted automatically.',
+        storage_211_title: 'Safer data storage',
+        storage_211_desc: 'A damaged data file is set aside as a .recovery copy instead of being silently overwritten, and oversized files are not loaded. Saves go through a temporary file that is cleaned up even on failure. History keeps 5000 entries, and pending bookmark and history changes are written when the browser closes.',
+        stability_211_title: 'Stability',
+        stability_211_desc: 'After a crash the interface restarts a limited number of times, and timers are released when a window closes. Memory used for site icons is capped, and importing very deeply nested bookmark folders no longer crashes the browser.'
       }
     };
 

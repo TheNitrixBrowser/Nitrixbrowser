@@ -99,10 +99,14 @@ function readLimitedFile(file, limit = MAX_JSON_BYTES) {
   } finally { fs.closeSync(fd) }
 }
 const isBooleanRecord = value => isRecord(value) && Object.values(value).every(item => typeof item === 'boolean')
+// Selektor nigdy nie potrzebuje '<' ani znaków kontrolnych. Odrzucamy je, żeby
+// reguła z element pickera nie mogła stać się znacznikiem HTML w interfejsie.
+const UNSAFE_SELECTOR = /[<\u0000-\u001f]/
 const isBlockedRules = value => isRecord(value) && Object.entries(value).every(([host, selectors]) =>
   host.length <= 253 && !['__proto__', 'constructor', 'prototype'].includes(host)
   && Array.isArray(selectors) && selectors.length <= 10000
-  && selectors.every(selector => typeof selector === 'string' && selector.length <= 4096))
+  && selectors.every(selector => typeof selector === 'string' && selector.length <= 4096
+    && !UNSAFE_SELECTOR.test(selector)))
 
 function createStore(directory) {
   const blockedWrites = new Set()
@@ -334,11 +338,17 @@ function registerAutofill({ ipcMain, trusted, access, hasPin, fingerprint,
     if (!origin || credentialOrigin(target.getURL()) !== origin) return false
     const entry = loadPasswords().find(item => item.site === request.site && item.user === request.user)
     if (!entry || typeof entry.plainPass !== 'string') return false
-    const script = `(${fillInPage.toString()})(${JSON.stringify(origin)},${JSON.stringify(entry.user)},${JSON.stringify(entry.plainPass)})`
+    // Wypełniamy z osobnego świata JS. Strona zachowuje własne prototypy i globals,
+    // więc nie może podstawić własnego settera HTMLInputElement.prototype.value
+    // ani podmienić helperów DOM, żeby przechwycić hasło w trakcie wypełniania.
+    const worldId = 1106
+    const frameScript = targetOrigin => ({
+      code: `(${fillInPage.toString()})(${JSON.stringify(targetOrigin)},${JSON.stringify(entry.user)},${JSON.stringify(entry.plainPass)})`,
+    })
     // Check each frame separately, including the narrowly scoped Librus login.
     const frames = target.mainFrame?.framesInSubtree
     if (!frames) {
-      try { return (await target.executeJavaScript(script)) === true }
+      try { return (await target.executeJavaScriptInIsolatedWorld(worldId, [frameScript(origin)])) === true }
       catch { return false }
     }
     for (const frame of frames) {
@@ -346,8 +356,7 @@ function registerAutofill({ ipcMain, trusted, access, hasPin, fingerprint,
         if (target.isDestroyed() || credentialOrigin(target.getURL()) !== origin) return false
         const frameOrigin = allowedFrameOrigin(origin, target.getURL(), frame.url)
         if (!frameOrigin) continue
-        const frameScript = `(${fillInPage.toString()})(${JSON.stringify(frameOrigin)},${JSON.stringify(entry.user)},${JSON.stringify(entry.plainPass)})`
-        if (await frame.executeJavaScript(frameScript) === true) return true
+        if (await frame.executeJavaScriptInIsolatedWorld(worldId, [frameScript(frameOrigin)]) === true) return true
       } catch { /* A frame may disappear or navigate while filling. */ }
     }
     return false
@@ -1028,7 +1037,10 @@ function installFeatures({ app, ipcMain, dialog, session, store, dataDir, truste
       const owner = wc && !wc.isDestroyed() ? windows.get(wc.hostWebContents?.id) : null
       const origin = originOf(details.securityOrigin || details.requestingUrl || wc?.getURL())
       if (!owner || owner.win.isDestroyed() || wc.getType() !== 'webview' || !origin) { callback(false); return }
-      if (['fullscreen', 'pointerLock', 'clipboard-sanitized-write'].includes(permission)) { callback(true); return }
+      if (permission === 'fullscreen') { callback(true); return }
+      // Pointer lock i zapis schowka mogą służyć do UI redress lub podmiany
+      // schowka — nie przyznajemy ich bez świadomej decyzji użytkownika.
+      if (permission === 'pointerLock' || permission === 'clipboard-sanitized-write') { callback(false); return }
       const kinds = permissionKinds(permission, details)
       if (!kinds.length || kinds.some(k => decision(wc, origin, k) === 'block')) { callback(false); return }
       const protectMedia = () => { if (kinds.some(k => ['camera', 'microphone'].includes(k))) mediaProtected.add(wc.id) }
@@ -1228,6 +1240,29 @@ function installFeatures({ app, ipcMain, dialog, session, store, dataDir, truste
   return { attachWindow, attachGuest, clearPermissions, approveQuit: () => { for(const state of windows.values())state.approved=true }, privateWindowCount: () => [...windows.values()].filter(w => w.private).length }
 }
 module.exports = { installFeatures, safeTabUrl, validSnapshot, validOptions, bookmarkHTML, pageCanSleep, DEFAULTS }
+
+}
+
+// ===== blocked-page =====
+factories["blocked-page"] = function(module, exports) {
+'use strict'
+
+// Strona nitrix-block:// jest uprzywilejowanym, bezpiecznym originem. Trafia do niej
+// wyłącznie goła nazwa hosta, dodatkowo escapowana jako druga warstwa ochrony.
+const HOSTNAME_ONLY = /^[a-z0-9._:\-\[\]]{1,253}$/i
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[ch])
+}
+
+function normalizeBlockedDomain(value) {
+  const text = String(value == null ? '' : value).trim()
+  return HOSTNAME_ONLY.test(text) ? text : ''
+}
+
+module.exports = { escapeHtml, normalizeBlockedDomain }
 
 }
 
