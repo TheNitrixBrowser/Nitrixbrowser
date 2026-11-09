@@ -82,22 +82,6 @@ Wersja AppImage działa bez instalacji zależności przez menedżer pakietów. O
 - Ograniczono liczbę restartów interfejsu po awarii, zwalniano timery przy zamykaniu okna i ograniczono pamięć przeznaczoną na ikony stron.
 - Import bardzo głęboko zagnieżdżonych folderów zakładek nie wywraca już przeglądarki.
 
-## Co nowego w 2.1.0
-
-- Dodano motyw Backdrop Blur z regulacją siły efektu oraz wyborem obszarów interfejsu.
-- Dodano wyszukiwanie tekstu na stronie wraz z przechodzeniem między wynikami.
-- Dodano obsługę skrótów klawiszowych do kart, historii, pobrań, zakładek, powiększania i nawigacji.
-- Dodano usypianie nieaktywnych kart oraz wyjątki dla witryn.
-- Dodano przywracanie ostatnio zamkniętych kart i odzyskiwanie sesji po awarii.
-- Dodano możliwość otwierania ustawień, historii, menedżera haseł i „Co nowego?” w osobnej karcie.
-- Dodano własne pytania o uprawnienia stron oraz zarządzanie zgodami pod ikoną kłódki.
-- Dodano usuwanie danych i zgód pojedynczej witryny.
-- Dodano eksport zakładek do pliku HTML.
-- Poprawiono autouzupełnianie haseł na stronach wieloetapowych oraz w osadzonych formularzach.
-- Poprawiono stabilność przy zamykaniu kart, obsługę importu i odzyskiwanie po błędach interfejsu.
-- Włączono sandbox dla wszystkich kart oraz wzmocniono izolację odwiedzanych stron od interfejsu przeglądarki.
-- Poprawiono zgodność z WhatsApp Web.
-
 ## Prywatność
 
 Nitrix nie zbiera danych użytkownika na własne serwery.
